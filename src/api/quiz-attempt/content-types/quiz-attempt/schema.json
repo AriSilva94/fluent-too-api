@@ -1,0 +1,84 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quiz_attempts",
+  "info": {
+    "singularName": "quiz-attempt",
+    "pluralName": "quiz-attempts",
+    "displayName": "Quiz Attempt",
+    "description": "Student quiz completion history"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "attemptKey": {
+      "type": "string",
+      "unique": true
+    },
+    "quiz": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::quiz.quiz"
+    },
+    "quizSlug": {
+      "type": "string",
+      "required": true
+    },
+    "quizTitle": {
+      "type": "string",
+      "required": true
+    },
+    "targetLanguage": {
+      "type": "enumeration",
+      "enum": ["pt", "en", "fr"],
+      "required": true
+    },
+    "level": {
+      "type": "enumeration",
+      "enum": ["A1", "A2", "B1", "B2", "C1", "C2"],
+      "required": true
+    },
+    "quizType": {
+      "type": "enumeration",
+      "enum": ["multiple-choice", "fill-gap", "flashcard"],
+      "required": true
+    },
+    "score": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 100
+    },
+    "correctCount": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "incorrectCount": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "totalCount": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "answers": {
+      "type": "json"
+    },
+    "details": {
+      "type": "json"
+    },
+    "completedAt": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}
