@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { ensureAppAccessControl } from './auth/access-control';
 import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './auth/config';
+import { patchUploadServiceForWebp } from './upload/webp';
 
 async function setStoreValue(strapi: Core.Strapi, key: string, value: unknown) {
   const store = strapi.store({ type: 'plugin', name: 'users-permissions', key });
@@ -13,6 +14,8 @@ async function setStoreValue(strapi: Core.Strapi, key: string, value: unknown) {
 export default {
   register() {},
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    patchUploadServiceForWebp(strapi);
+
     const frontendUrl = process.env.FRONTEND_PUBLIC_URL ?? 'http://localhost:3000';
     const strapiPublicUrl = strapi.config.get<string>('server.url', process.env.STRAPI_PUBLIC_URL ?? 'http://localhost:1337');
     const emailFrom = process.env.EMAIL_FROM ?? 'Fluent Too <no-reply@example.com>';

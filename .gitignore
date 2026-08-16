@@ -122,6 +122,14 @@ coverage
 ############################
 
 .env
+.env.local
+.env.dev
+.env.prd
+.env*.local
+!.env.example
+!.env.local.example
+!.env.dev.example
+!.env.prd.example
 license.txt
 exports
 .strapi

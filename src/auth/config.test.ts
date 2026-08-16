@@ -40,6 +40,14 @@ describe('auth config', () => {
     });
     expect(templates.reset_password.options.message).toContain('<%= URL %>?code=<%= TOKEN %>');
     expect(templates.email_confirmation.options.message).toContain('<%= URL %>?confirmation=<%= CODE %>');
+    expect(templates.reset_password.options.message).toContain('#ff6700');
+    expect(templates.reset_password.options.message).toContain('#4184f9');
+    expect(templates.reset_password.options.message).toContain('Redefinir senha');
+    expect(templates.reset_password.options.message).toContain('Se você não solicitou esta alteração');
+    expect(templates.email_confirmation.options.message).toContain('#ff6700');
+    expect(templates.email_confirmation.options.message).toContain('#4184f9');
+    expect(templates.email_confirmation.options.message).toContain('Confirmar e-mail');
+    expect(templates.email_confirmation.options.message).toContain('Fluent Too');
     expect(JSON.stringify(templates)).not.toContain('secret');
   });
 });

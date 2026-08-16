@@ -23,7 +23,7 @@
       },
       {
         "__component": "shared.media",
-        "file": "coffee-art.jpg"
+        "file": "coffee-art.webp"
       }
     ]
   },
@@ -53,12 +53,12 @@
     {
       "name": "David Doe",
       "email": "daviddoe@strapi.io",
-      "avatar": "daviddoe@strapi.io.jpg"
+      "avatar": "daviddoe@strapi.io.webp"
     },
     {
       "name": "Sarah Baker",
       "email": "sarahbaker@strapi.io",
-      "avatar": "sarahbaker@strapi.io.jpg"
+      "avatar": "sarahbaker@strapi.io.webp"
     }
   ],
   "articles": [
@@ -85,7 +85,7 @@
         },
         {
           "__component": "shared.media",
-          "file": "coffee-art.jpg"
+          "file": "coffee-art.webp"
         },
         {
           "__component": "shared.rich-text",
@@ -93,7 +93,7 @@
         },
         {
           "__component": "shared.slider",
-          "files": ["coffee-art.jpg", "coffee-beans.jpg"]
+          "files": ["coffee-art.webp", "coffee-beans.webp"]
         }
       ]
     },
@@ -120,7 +120,7 @@
         },
         {
           "__component": "shared.media",
-          "file": "coffee-art.jpg"
+          "file": "coffee-art.webp"
         },
         {
           "__component": "shared.rich-text",
@@ -128,7 +128,7 @@
         },
         {
           "__component": "shared.slider",
-          "files": ["coffee-art.jpg", "coffee-beans.jpg"]
+          "files": ["coffee-art.webp", "coffee-beans.webp"]
         }
       ]
     },
@@ -155,7 +155,7 @@
         },
         {
           "__component": "shared.media",
-          "file": "coffee-art.jpg"
+          "file": "coffee-art.webp"
         },
         {
           "__component": "shared.rich-text",
@@ -163,7 +163,7 @@
         },
         {
           "__component": "shared.slider",
-          "files": ["coffee-art.jpg", "coffee-beans.jpg"]
+          "files": ["coffee-art.webp", "coffee-beans.webp"]
         }
       ]
     },
@@ -190,7 +190,7 @@
         },
         {
           "__component": "shared.media",
-          "file": "coffee-art.jpg"
+          "file": "coffee-art.webp"
         },
         {
           "__component": "shared.rich-text",
@@ -198,7 +198,7 @@
         },
         {
           "__component": "shared.slider",
-          "files": ["coffee-art.jpg", "coffee-beans.jpg"]
+          "files": ["coffee-art.webp", "coffee-beans.webp"]
         }
       ]
     },
@@ -225,7 +225,7 @@
         },
         {
           "__component": "shared.media",
-          "file": "coffee-art.jpg"
+          "file": "coffee-art.webp"
         },
         {
           "__component": "shared.rich-text",
@@ -233,7 +233,7 @@
         },
         {
           "__component": "shared.slider",
-          "files": ["coffee-art.jpg", "coffee-beans.jpg"]
+          "files": ["coffee-art.webp", "coffee-beans.webp"]
         }
       ]
     }

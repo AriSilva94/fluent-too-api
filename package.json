@@ -21,6 +21,7 @@
     "@strapi/plugin-cloud": "5.52.0",
     "@strapi/plugin-users-permissions": "5.52.0",
     "@strapi/provider-email-nodemailer": "^5.52.0",
+    "@strapi/provider-upload-aws-s3": "^5.52.0",
     "@strapi/strapi": "5.52.0",
     "fs-extra": "^10.0.0",
     "mime-types": "^2.1.27",
@@ -28,6 +29,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.30.3",
+    "sharp": "^0.35.3",
     "styled-components": "^6.0.0"
   },
   "devDependencies": {

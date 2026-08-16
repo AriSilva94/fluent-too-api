@@ -75,7 +75,7 @@ function getFileData(fileName) {
 
   return {
     filepath: filePath,
-    originalFileName: fileName,
+    originalFilename: fileName,
     size,
     mimetype: mimeType,
   };
@@ -168,7 +168,7 @@ async function updateBlocks(blocks) {
 
 async function importArticles() {
   for (const article of articles) {
-    const cover = await checkFileExistsBeforeUpload([`${article.slug}.jpg`]);
+    const cover = await checkFileExistsBeforeUpload([`${article.slug}.webp`]);
     const updatedBlocks = await updateBlocks(article.blocks);
 
     await createEntry({
@@ -185,8 +185,8 @@ async function importArticles() {
 }
 
 async function importGlobal() {
-  const favicon = await checkFileExistsBeforeUpload(['favicon.png']);
-  const shareImage = await checkFileExistsBeforeUpload(['default-image.png']);
+  const favicon = await checkFileExistsBeforeUpload(['favicon.webp']);
+  const shareImage = await checkFileExistsBeforeUpload(['default-image.webp']);
   return createEntry({
     model: 'global',
     entry: {
