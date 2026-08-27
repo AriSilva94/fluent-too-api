@@ -25,6 +25,7 @@ COPY --from=builder --chown=strapi:strapi /app/dist ./dist
 COPY --from=builder --chown=strapi:strapi /app/public ./public
 COPY --from=builder --chown=strapi:strapi /app/favicon.png ./favicon.png
 COPY --from=builder --chown=strapi:strapi /app/dist/src ./src
+COPY --from=builder --chown=strapi:strapi /app/dist/build ./build
 COPY --from=builder --chown=strapi:strapi /app/package.json ./package.json
 COPY --from=builder --chown=strapi:strapi /app/package-lock.json ./package-lock.json
 COPY --from=builder --chown=strapi:strapi /app/node_modules ./node_modules
