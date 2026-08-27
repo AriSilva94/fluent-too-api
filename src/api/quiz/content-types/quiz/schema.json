@@ -46,6 +46,17 @@
     "estimatedMinutes": {
       "type": "integer",
       "min": 1
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "isPublic": {
+      "type": "boolean",
+      "required": true,
+      "default": true
     }
   }
 }
