@@ -38,6 +38,28 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
         sessions: {
           httpOnly: false,
         },
+        callback: {
+          validate(callback: string) {
+            const frontendUrl = env('FRONTEND_PUBLIC_URL');
+            let uCallback: URL;
+            let uFrontend: URL;
+
+            try {
+              uCallback = new URL(callback);
+              uFrontend = new URL(frontendUrl);
+            } catch {
+              throw new Error('The callback is not a valid URL');
+            }
+
+            if (uCallback.origin !== uFrontend.origin) {
+              throw new Error(`Forbidden callback provided: origin doesn't match FRONTEND_PUBLIC_URL.`);
+            }
+
+            if (uCallback.pathname !== '/api/auth/google/callback') {
+              throw new Error(`Forbidden callback provided: unexpected pathname.`);
+            }
+          },
+        },
       },
     },
     email: {
