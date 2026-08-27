@@ -40,7 +40,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
         },
         callback: {
           validate(callback: string) {
-            const frontendUrl = env('FRONTEND_PUBLIC_URL');
+            const frontendUrl = env('FRONTEND_PUBLIC_URL', 'http://localhost:3000');
             let uCallback: URL;
             let uFrontend: URL;
 
