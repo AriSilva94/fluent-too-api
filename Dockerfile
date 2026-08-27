@@ -9,12 +9,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npm run build && \
+    rm -rf node_modules/vite node_modules/@vitejs node_modules/rolldown node_modules/@rolldown \
+      node_modules/webpack node_modules/@radix-ui node_modules/@shikijs node_modules/hls.js \
+      node_modules/@mux node_modules/@formatjs node_modules/core-js-pure node_modules/rxjs \
+      node_modules/@reduxjs node_modules/vitest node_modules/lightningcss* node_modules/@swc
 
 FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 1001 strapi && useradd --system --uid 1001 --gid strapi --create-home --home-dir /home/strapi strapi
 COPY --from=builder --chown=strapi:strapi /app/dist/config ./config
 COPY --from=builder --chown=strapi:strapi /app/database ./database
