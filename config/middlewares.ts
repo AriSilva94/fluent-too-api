@@ -16,7 +16,17 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',
-  'strapi::session',
+  {
+    name: 'strapi::session',
+    config: {
+      // Dokploy/Traefik terminates TLS in front of the container; the app only
+      // ever sees plain HTTP internally, so koa-session's default
+      // `secure: NODE_ENV === 'production'` throws instead of setting the
+      // cookie. This session is only used for the short-lived OAuth
+      // grant handshake, not the app's real auth cookies.
+      secure: false,
+    },
+  },
   'strapi::favicon',
   'strapi::public',
 ];
