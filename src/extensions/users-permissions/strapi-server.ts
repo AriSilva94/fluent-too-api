@@ -108,5 +108,28 @@ export default (plugin: any) => {
     config: { prefix: '', auth: false, middlewares: [] },
   });
 
+  const originalMe = plugin.controllers.user.me;
+
+  plugin.controllers.user.me = async (ctx: any) => {
+    const strapi = ctx.state?.strapi ?? global.strapi;
+    if (!ctx.state.user?.id) return ctx.unauthorized();
+
+    const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+      where: { id: ctx.state.user.id },
+      populate: ['role'],
+    });
+
+    if (!user) return originalMe(ctx);
+
+    ctx.body = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      confirmed: user.confirmed,
+      blocked: user.blocked,
+      role: user.role ? { id: user.role.id, name: user.role.name, type: user.role.type } : null,
+    };
+  };
+
   return plugin;
 };
