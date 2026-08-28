@@ -141,6 +141,8 @@ Strapi via rotas proxy no Next, como o resto do app.
   admins pelo painel do Strapi — professor aprovado tem a permissão de API, mas ainda não tem UI.
 - Detalhamento das diferenças entre `super_admin` e `app_admin`.
 - Fila de moderação de conteúdo.
+- Professor ver o motivo da rejeição no próprio dashboard: exigiria um endpoint
+  `GET /api/teacher-applications/mine`. Nesta fatia o `reviewNote` só aparece para o admin.
 
 ## Riscos
 
