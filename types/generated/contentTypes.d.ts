@@ -544,6 +544,51 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
+  collectionName: 'blog_posts';
+  info: {
+    description: 'Language learning blog article';
+    displayName: 'Blog Post';
+    pluralName: 'blog-posts';
+    singularName: 'blog-post';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    author: Schema.Attribute.String & Schema.Attribute.Required;
+    category: Schema.Attribute.String & Schema.Attribute.Required;
+    content: Schema.Attribute.Text & Schema.Attribute.Required;
+    coverImage: Schema.Attribute.Media<'images'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.String & Schema.Attribute.Required;
+    excerpt: Schema.Attribute.Text & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::blog-post.blog-post'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    readingTime: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      >;
+    slug: Schema.Attribute.String & Schema.Attribute.Required;
+    targetLanguage: Schema.Attribute.Enumeration<['pt', 'en', 'fr']> &
+      Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -711,6 +756,10 @@ export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    image: Schema.Attribute.Media<'images'>;
+    isPublic: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
     level: Schema.Attribute.Enumeration<['A1', 'A2', 'B1', 'B2', 'C1', 'C2']> &
       Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1246,6 +1295,7 @@ declare module '@strapi/strapi' {
       'api::about.about': ApiAboutAbout;
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
+      'api::blog-post.blog-post': ApiBlogPostBlogPost;
       'api::category.category': ApiCategoryCategory;
       'api::global.global': ApiGlobalGlobal;
       'api::quiz-attempt.quiz-attempt': ApiQuizAttemptQuizAttempt;

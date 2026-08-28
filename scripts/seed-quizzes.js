@@ -10,6 +10,7 @@
 // LEVEL_VISUALS constant did before this field existed).
 
 const path = require('path');
+const { extraPublicQuizzes } = require('./seed-quizzes-extra');
 
 const FRONTEND_LEVELS_DIR = path.join(__dirname, '..', '..', 'fluent-too', 'public', 'levels');
 
@@ -631,7 +632,7 @@ async function main() {
 
   const counts = { created: 0, updated: 0 };
 
-  for (const quiz of publicQuizzes) {
+  for (const quiz of [...publicQuizzes, ...extraPublicQuizzes]) {
     const result = await upsertQuiz(app, quiz, true, imageByLevel[quiz.level]);
     counts[result] += 1;
   }
