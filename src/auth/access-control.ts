@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { migrateAuthenticatedUsersToStudent } from './role-migration';
 
 type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student';
 type AccessRoleType = AppRoleType | 'public' | 'authenticated';
@@ -136,6 +137,8 @@ export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail: st
   if (adminRole) {
     await assignUserRole(strapi, plan.adminEmail, adminRole.id);
   }
+
+  await migrateAuthenticatedUsersToStudent(strapi);
 }
 
 async function ensureRole(strapi: Core.Strapi, roleDefinition: AppRoleDefinition) {
