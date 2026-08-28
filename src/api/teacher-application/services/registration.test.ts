@@ -32,6 +32,12 @@ describe('validação do cadastro de professor', () => {
     expect(result.ok && 'role' in result.data).toBe(false);
   });
 
+  it('ignora um id de anexo enviado pelo cliente no JSON', () => {
+    const result = validateTeacherRegistration({ ...valid, attachment: 42 });
+
+    expect(result.ok && 'attachment' in result.data).toBe(false);
+  });
+
   it('rejeita e-mail inválido', () => {
     expect(validateTeacherRegistration({ ...valid, email: 'nao-e-email' })).toEqual({
       ok: false,

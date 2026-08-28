@@ -15,6 +15,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
   },
   'strapi::poweredBy',
   'strapi::query',
+  // Recusa o multipart do cadastro de professor por content-length ANTES do
+  // parser gravar o arquivo em disco.
+  'global::teacher-attachment-limit',
   'strapi::body',
   {
     name: 'strapi::session',

@@ -8,7 +8,6 @@ export type TeacherRegistrationInput = {
   experience: string;
   languages: string[];
   credentialUrl?: string;
-  attachment?: number;
 };
 
 export type TeacherRegistrationResult =
@@ -25,7 +24,6 @@ export function validateTeacherRegistration(input: unknown): TeacherRegistration
     ? value.languages.filter((language): language is string => supportedLanguages.includes(String(language)))
     : [];
   const credentialUrl = String(value.credentialUrl ?? '').trim();
-  const attachment = Number(value.attachment);
 
   if (!emailPattern.test(email)) return { ok: false, error: 'INVALID_EMAIL' };
   if (password.length < 8) return { ok: false, error: 'WEAK_PASSWORD' };
@@ -40,7 +38,6 @@ export function validateTeacherRegistration(input: unknown): TeacherRegistration
       experience,
       languages,
       ...(credentialUrl ? { credentialUrl } : {}),
-      ...(Number.isFinite(attachment) && attachment > 0 ? { attachment } : {}),
     },
   };
 }

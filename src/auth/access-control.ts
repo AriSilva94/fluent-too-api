@@ -1,5 +1,6 @@
 import type { Core } from '@strapi/strapi';
 import { migrateAuthenticatedUsersToStudent } from './role-migration';
+import { isAdminRole } from './roles';
 
 type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student';
 type AccessRoleType = AppRoleType | 'public' | 'authenticated';
@@ -31,6 +32,8 @@ const readActions = [
   'api::quiz.quiz.findOne',
   'api::quiz-attempt.quiz-attempt.find',
   'api::quiz-attempt.quiz-attempt.findOne',
+  'api::blog-post.blog-post.find',
+  'api::blog-post.blog-post.findOne',
 ];
 
 const quizManagementActions = [
@@ -89,6 +92,9 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
     ...readActions,
     ...quizManagementActions.filter((action) => !readActions.includes(action)),
     ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
+    // Sem estas ações o check do users-permissions barra o admin antes da policy de
+    // ownership decidir, e `syncPermissions` apagaria qualquer permissão dada na mão.
+    ...blogManagementActions,
     ...teacherApplicationReviewActions,
   ];
 
@@ -198,9 +204,12 @@ async function assignUserRole(strapi: Core.Strapi, email: string, roleId: number
   if (!email) return;
 
   const userQuery = strapi.db.query('plugin::users-permissions.user');
-  const user = await userQuery.findOne({ where: { email } });
+  const user = await userQuery.findOne({ where: { email }, populate: ['role'] });
 
-  if (!user || user.role?.id === roleId || user.role === roleId) return;
+  // Sem popular a role a comparação nunca batia e todo boot rebaixava a conta de volta
+  // para app_admin — tornando super_admin inatribuível na prática. Qualquer role de
+  // admin já atribuída manualmente é preservada.
+  if (!user || isAdminRole(user.role?.type)) return;
 
   await userQuery.update({
     where: { id: user.id },

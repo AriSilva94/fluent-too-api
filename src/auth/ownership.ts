@@ -18,3 +18,33 @@ export function canMutateEntry(entry: { owner?: { id: number | string } | null }
   if (isAdminRole(user.role?.type)) return true;
   return Boolean(entry.owner) && String(entry.owner?.id) === String(user.id);
 }
+
+/**
+ * Com `draftAndPublish` um documento é mais de uma linha (rascunho e publicada) com o
+ * mesmo `documentId`. O documento é do usuário quando QUALQUER uma das linhas aponta
+ * para ele — assim uma divergência entre as linhas nunca vira 403 no próprio conteúdo.
+ */
+export function canMutateDocument(entries: { owner?: { id: number | string } | null }[], user: OwnerUser) {
+  if (isAdminRole(user.role?.type)) return true;
+  return entries.some((entry) => canMutateEntry(entry, user));
+}
+
+/**
+ * Grava o dono em TODAS as linhas do documento. `updateMany` da query engine ignora
+ * relações (só processa atributos escalares), então cada linha é atualizada por id.
+ */
+export async function assignOwnerToDocument(
+  strapi: any,
+  uid: string,
+  where: Record<string, unknown>,
+  userId: number | string
+) {
+  const rows: { id: number | string }[] = await strapi.db.query(uid).findMany({ where, select: ['id'] });
+  if (!rows || rows.length === 0) throw new Error('Registro criado não encontrado para vincular owner.');
+
+  for (const row of rows) {
+    await strapi.db.query(uid).update({ where: { id: row.id }, data: { owner: userId } });
+  }
+
+  return rows.length;
+}

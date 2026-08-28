@@ -78,12 +78,17 @@ describe('access control', () => {
       'api::quiz.quiz.findOne',
       'api::quiz-attempt.quiz-attempt.find',
       'api::quiz-attempt.quiz-attempt.findOne',
+      'api::blog-post.blog-post.find',
+      'api::blog-post.blog-post.findOne',
       'api::quiz.quiz.create',
       'api::quiz.quiz.update',
       'api::quiz.quiz.delete',
       'api::quiz-attempt.quiz-attempt.create',
       'api::quiz-attempt.quiz-attempt.update',
       'api::quiz-attempt.quiz-attempt.delete',
+      'api::blog-post.blog-post.create',
+      'api::blog-post.blog-post.update',
+      'api::blog-post.blog-post.delete',
       'api::teacher-application.teacher-application.find',
       'api::teacher-application.teacher-application.findOne',
       'api::teacher-application.teacher-application.approve',
@@ -91,6 +96,21 @@ describe('access control', () => {
     ]);
   });
 
+
+  it('permite ao admin moderar blog posts de qualquer professor', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+
+    for (const action of [
+      'api::blog-post.blog-post.find',
+      'api::blog-post.blog-post.findOne',
+      'api::blog-post.blog-post.create',
+      'api::blog-post.blog-post.update',
+      'api::blog-post.blog-post.delete',
+    ]) {
+      expect(plan.permissions.app_admin).toContain(action);
+      expect(plan.permissions.super_admin).toContain(action);
+    }
+  });
 
   it('permite leitura pública de quizzes publicados', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
