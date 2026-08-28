@@ -1,6 +1,6 @@
 import type { Core } from '@strapi/strapi';
 
-type AppRoleType = 'app_admin' | 'teacher';
+type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student';
 type AccessRoleType = AppRoleType | 'public' | 'authenticated';
 
 type AppRoleDefinition = {
@@ -60,31 +60,54 @@ const studentHistoryActions = [
   'api::quiz-attempt.quiz-attempt.create',
 ];
 
+const blogManagementActions = [
+  'api::blog-post.blog-post.create',
+  'api::blog-post.blog-post.update',
+  'api::blog-post.blog-post.delete',
+];
+
+const contentCreationActions = [
+  'api::quiz.quiz.create',
+  'api::quiz.quiz.update',
+  'api::quiz.quiz.delete',
+  ...blogManagementActions,
+];
+
+const teacherApplicationReviewActions = [
+  'api::teacher-application.teacher-application.find',
+  'api::teacher-application.teacher-application.findOne',
+  'api::teacher-application.teacher-application.approve',
+  'api::teacher-application.teacher-application.reject',
+];
+
+const studentActions = [...authenticatedUserActions, ...studentHistoryActions];
+
 export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
+  const adminActions = [
+    ...authenticatedUserActions,
+    ...readActions,
+    ...quizManagementActions.filter((action) => !readActions.includes(action)),
+    ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
+    ...teacherApplicationReviewActions,
+  ];
+
   return {
     adminEmail: adminEmail.trim().toLowerCase(),
     roles: [
-      {
-        name: 'Admin',
-        type: 'app_admin',
-        description: 'Can view every app resource and manage quizzes',
-      },
-      {
-        name: 'Teacher',
-        type: 'teacher',
-        description: 'Can create quizzes',
-      },
+      { name: 'Super Admin', type: 'super_admin', description: 'Full application access' },
+      { name: 'Admin', type: 'app_admin', description: 'Can view every app resource and manage quizzes' },
+      { name: 'Teacher', type: 'teacher', description: 'Can create quizzes and blog posts' },
+      { name: 'Teacher (pending)', type: 'teacher_pending', description: 'Teacher waiting for manual approval' },
+      { name: 'Student', type: 'student', description: 'Can take quizzes and see own history' },
     ],
     permissions: {
-      app_admin: [
-        ...authenticatedUserActions,
-        ...readActions,
-        ...quizManagementActions.filter((action) => !readActions.includes(action)),
-        ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
-      ],
-      teacher: [...authenticatedUserActions, ...studentHistoryActions, 'api::quiz.quiz.create'],
+      super_admin: adminActions,
+      app_admin: adminActions,
+      teacher: [...studentActions, ...contentCreationActions],
+      teacher_pending: [...studentActions],
+      student: [...studentActions],
       public: ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'],
-      authenticated: [...authenticatedUserActions, ...studentHistoryActions],
+      authenticated: [...studentActions],
     },
   };
 }

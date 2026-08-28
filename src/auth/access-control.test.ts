@@ -2,21 +2,53 @@ import { describe, expect, it } from 'vitest';
 import { buildAccessControlPlan } from './access-control';
 
 describe('access control', () => {
-  it('define roles do aplicativo com nomes em inglês', () => {
+  it('define as cinco roles do aplicativo', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
 
-    expect(plan.roles).toEqual([
-      {
-        name: 'Admin',
-        type: 'app_admin',
-        description: 'Can view every app resource and manage quizzes',
-      },
-      {
-        name: 'Teacher',
-        type: 'teacher',
-        description: 'Can create quizzes',
-      },
+    expect(plan.roles.map((role) => role.type)).toEqual([
+      'super_admin',
+      'app_admin',
+      'teacher',
+      'teacher_pending',
+      'student',
     ]);
+  });
+
+  it('dá ao professor pendente exatamente as permissões do estudante', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+
+    expect(plan.permissions.teacher_pending).toEqual(plan.permissions.student);
+  });
+
+  it('dá ao professor as permissões do estudante mais criação de conteúdo', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+    const extra = plan.permissions.teacher.filter((action) => !plan.permissions.student.includes(action));
+
+    expect(extra).toEqual([
+      'api::quiz.quiz.create',
+      'api::quiz.quiz.update',
+      'api::quiz.quiz.delete',
+      'api::blog-post.blog-post.create',
+      'api::blog-post.blog-post.update',
+      'api::blog-post.blog-post.delete',
+    ]);
+  });
+
+  it('permite apenas admins revisarem candidaturas', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+    const review = 'api::teacher-application.teacher-application.find';
+
+    expect(plan.permissions.app_admin).toContain(review);
+    expect(plan.permissions.super_admin).toContain(review);
+    expect(plan.permissions.teacher).not.toContain(review);
+    expect(plan.permissions.teacher_pending).not.toContain(review);
+    expect(plan.permissions.student).not.toContain(review);
+  });
+
+  it('mantém authenticated com as permissões de estudante para usuários ainda não migrados', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+
+    expect(plan.permissions.authenticated).toEqual(plan.permissions.student);
   });
 
   it('promove o usuário informado para Admin', () => {
@@ -52,22 +84,13 @@ describe('access control', () => {
       'api::quiz-attempt.quiz-attempt.create',
       'api::quiz-attempt.quiz-attempt.update',
       'api::quiz-attempt.quiz-attempt.delete',
+      'api::teacher-application.teacher-application.find',
+      'api::teacher-application.teacher-application.findOne',
+      'api::teacher-application.teacher-application.approve',
+      'api::teacher-application.teacher-application.reject',
     ]);
   });
 
-  it('permite Teacher apenas criar quizzes', () => {
-    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
-
-    expect(plan.permissions.teacher).toEqual([
-      'plugin::users-permissions.user.me',
-      'plugin::users-permissions.auth.logout',
-      'plugin::users-permissions.auth.changePassword',
-      'api::quiz-attempt.quiz-attempt.find',
-      'api::quiz-attempt.quiz-attempt.findOne',
-      'api::quiz-attempt.quiz-attempt.create',
-      'api::quiz.quiz.create',
-    ]);
-  });
 
   it('permite leitura pública de quizzes publicados', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
