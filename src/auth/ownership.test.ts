@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { buildOwnedCreateData, canMutateEntry } from './ownership';
+import { canMutateEntry, stripOwner } from './ownership';
 
 const teacher = { id: 5, role: { type: 'teacher' } };
 const otherTeacher = { id: 6, role: { type: 'teacher' } };
 const admin = { id: 1, role: { type: 'app_admin' } };
 
 describe('ownership de conteúdo', () => {
-  it('força o owner a partir do usuário autenticado', () => {
-    expect(buildOwnedCreateData({ title: 'Quiz', owner: 999 }, teacher)).toEqual({ title: 'Quiz', owner: 5 });
+  it('remove o owner enviado pelo cliente, ignorando o valor recebido', () => {
+    expect(stripOwner({ title: 'Quiz', owner: 999 })).toEqual({ title: 'Quiz' });
+  });
+
+  it('não quebra quando o corpo não tem owner', () => {
+    expect(stripOwner({ title: 'Quiz' })).toEqual({ title: 'Quiz' });
   });
 
   it('permite o dono alterar', () => {
