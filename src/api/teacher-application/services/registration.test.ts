@@ -24,6 +24,14 @@ describe('validação da candidatura de professor', () => {
     expect(validateTeacherApplication({ ...valid, languages: ['de'] })).toEqual({ ok: false, error: 'REQUIRED' });
   });
 
+  it('aceita um idioma único vindo do multipart como string', () => {
+    expect(validateTeacherApplication({ ...valid, languages: 'en' })).toEqual({
+      ok: true,
+      data: { bio: valid.bio, experience: valid.experience, languages: ['en'] },
+    });
+    expect(validateTeacherApplication({ ...valid, languages: 'de' })).toEqual({ ok: false, error: 'REQUIRED' });
+  });
+
   it('ignora qualquer role enviada pelo cliente', () => {
     const result = validateTeacherApplication({ ...valid, role: 'app_admin' });
 

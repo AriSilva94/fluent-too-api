@@ -15,9 +15,14 @@ export function validateTeacherApplication(input: unknown): TeacherApplicationRe
   const value = (input ?? {}) as Record<string, unknown>;
   const bio = String(value.bio ?? '').trim();
   const experience = String(value.experience ?? '').trim();
-  const languages = Array.isArray(value.languages)
-    ? value.languages.filter((language): language is string => supportedLanguages.includes(String(language)))
-    : [];
+  // Um multipart com um único campo `languages` chega como string, não como array:
+  // sem normalizar, escolher um idioma só era recusado com REQUIRED.
+  const rawLanguages = Array.isArray(value.languages)
+    ? value.languages
+    : value.languages === undefined || value.languages === null
+      ? []
+      : [value.languages];
+  const languages = rawLanguages.filter((language): language is string => supportedLanguages.includes(String(language)));
   const credentialUrl = String(value.credentialUrl ?? '').trim();
 
   if (!bio || !experience || languages.length === 0) return { ok: false, error: 'REQUIRED' };
