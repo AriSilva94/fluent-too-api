@@ -7,6 +7,28 @@ const USER_UID = 'plugin::users-permissions.user';
 const ROLE_UID = 'plugin::users-permissions.role';
 const APPLICATION_UID = 'api::teacher-application.teacher-application';
 
+// Sinaliza, dentro do bloco `try/catch` da transação, que o `findOne` de dentro dela
+// encontrou uma candidatura concorrente — distinto de um erro de infraestrutura, mas
+// tratado do mesmo jeito (TEACHER_APPLICATION_EXISTS) por quem chama.
+class DuplicateApplicationError extends Error {}
+
+/**
+ * Mesma checagem do antigo `registerTeacher`: sem um índice único garantido pelo
+ * relacionamento `oneToOne`, uma corrida entre duas chamadas concorrentes pode fazer
+ * o `create` do perdedor falhar na constraint do banco em vez de ser barrado pelo
+ * `findOne` — isso não pode virar um 500 genérico.
+ */
+function isUniqueConstraintError(error: unknown): boolean {
+  const err = error as { code?: string; message?: string } | undefined;
+  if (!err) return false;
+  const message = err.message ?? '';
+  return (
+    err.code === 'ER_DUP_ENTRY' ||
+    err.code === '23505' ||
+    /already taken|unique constraint|duplicate/i.test(message)
+  );
+}
+
 async function loadUserWithRole(strapi: Core.Strapi, id: number | string | undefined) {
   if (!id) return null;
   return strapi.db.query(USER_UID).findOne({ where: { id }, populate: ['role'] });
@@ -56,19 +78,34 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
       attachmentId = uploadedFile?.id;
     }
 
-    await strapi.db.query(APPLICATION_UID).create({
-      data: {
-        user: user.id,
-        status: 'pending',
-        bio,
-        experience,
-        languages,
-        ...(credentialUrl ? { credentialUrl } : {}),
-        ...(attachmentId ? { attachment: attachmentId } : {}),
-      },
+    // A checagem de duplicidade, a criação da candidatura e a troca de role precisam
+    // ser atômicas: sem transação, duas chamadas concorrentes do mesmo usuário podem
+    // passar pelo `findOne` antes de qualquer `create` existir e as duas seguirem em
+    // frente (ou uma delas vira uma candidatura fantasma sem a role correspondente).
+    await strapi.db.transaction(async () => {
+      const existingApplication = await strapi.db.query(APPLICATION_UID).findOne({ where: { user: user.id } });
+      if (existingApplication) throw new DuplicateApplicationError('TEACHER_APPLICATION_EXISTS');
+
+      await strapi.db.query(APPLICATION_UID).create({
+        data: {
+          user: user.id,
+          status: 'pending',
+          bio,
+          experience,
+          languages,
+          ...(credentialUrl ? { credentialUrl } : {}),
+          ...(attachmentId ? { attachment: attachmentId } : {}),
+        },
+      });
+
+      // A role só muda depois da candidatura ser criada com sucesso, e na mesma
+      // transação: se a criação (ou a transação) falhar, a role não muda e o
+      // usuário continua `unassigned`, podendo tentar de novo.
+      await strapi.db.query(USER_UID).update({ where: { id: user.id }, data: { role: pendingRole.id } });
     });
   } catch (error) {
-    // Se a candidatura (ou o upload) falhar, remove o arquivo já enviado (se houver)
+    // Se a candidatura (ou o upload) falhar — incluindo o perdedor de uma corrida
+    // entre duas chamadas concorrentes — remove o arquivo já enviado (se houver)
     // para permitir uma nova tentativa sem deixar órfãos. O usuário já existia antes
     // desta chamada, então nada além do arquivo precisa ser desfeito.
     if (uploadedFile) {
@@ -78,12 +115,15 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
         strapi.log?.error?.('Falha ao remover arquivo órfão após erro na candidatura de professor', cleanupError);
       }
     }
+
+    // Cobre tanto a checagem explícita acima (achou uma candidatura concorrente já
+    // commitada) quanto uma constraint única do banco rejeitando o `create` do
+    // perdedor da corrida mesmo com o `findOne` dele não tendo achado nada.
+    if (error instanceof DuplicateApplicationError || isUniqueConstraintError(error)) {
+      return ctx.badRequest('TEACHER_APPLICATION_EXISTS');
+    }
     throw error;
   }
-
-  // A role só muda depois da candidatura ser criada com sucesso, para o usuário
-  // continuar `unassigned` (e poder tentar de novo) se algo acima falhar.
-  await strapi.db.query(USER_UID).update({ where: { id: user.id }, data: { role: pendingRole.id } });
 
   ctx.body = { data: { role: 'teacher_pending' } };
 }
@@ -115,6 +155,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     if (!canBecomeTeacher(user.role?.type)) return ctx.forbidden('PROFILE_ALREADY_SET');
 
+    // Checagem rápida só para evitar validar e enviar um anexo à toa quando já existe
+    // candidatura no caminho feliz; NÃO é a guarda contra a corrida entre duas chamadas
+    // concorrentes — essa vive dentro da transação de `createTeacherApplication`.
     const existingApplication = await strapi.db.query(APPLICATION_UID).findOne({ where: { user: user.id } });
     if (existingApplication) return ctx.badRequest('TEACHER_APPLICATION_EXISTS');
 
