@@ -1,6 +1,6 @@
 import type { Core } from '@strapi/strapi';
 
-const TEACHER_REGISTER_PATH = '/api/auth/local/register-teacher';
+const TEACHER_REGISTER_PATH = '/api/profile/teacher';
 
 // 5 MB de anexo (o mesmo limite de `validateAttachmentFile`) + folga para os
 // demais campos de texto do multipart e para os cabeçalhos de cada parte.

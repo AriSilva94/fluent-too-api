@@ -84,7 +84,11 @@ const teacherApplicationReviewActions = [
   'api::teacher-application.teacher-application.reject',
 ];
 
-const studentActions = [...authenticatedUserActions, ...studentHistoryActions];
+const becomeStudentAction = 'api::teacher-application.teacher-application.becomeStudent';
+const becomeTeacherAction = 'api::teacher-application.teacher-application.becomeTeacher';
+const myApplicationAction = 'api::teacher-application.teacher-application.myApplication';
+
+const studentActions = [...authenticatedUserActions, ...studentHistoryActions, myApplicationAction];
 
 export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
   const adminActions = [
@@ -112,9 +116,9 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
       super_admin: adminActions,
       app_admin: adminActions,
       teacher: [...studentActions, ...contentCreationActions],
-      teacher_pending: [...studentActions],
+      teacher_pending: [...studentActions, becomeStudentAction],
       student: [...studentActions],
-      unassigned: [...authenticatedUserActions],
+      unassigned: [...authenticatedUserActions, becomeStudentAction, becomeTeacherAction, myApplicationAction],
       public: ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'],
       authenticated: [...studentActions],
     },

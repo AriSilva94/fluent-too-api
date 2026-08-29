@@ -1,48 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { validateAttachmentFile, validateTeacherRegistration } from './registration';
+import { validateAttachmentFile, validateTeacherApplication } from './registration';
 
 const valid = {
-  email: 'Prof@Example.com',
-  password: 'senha-forte-123',
   bio: 'Professor de inglês há 8 anos.',
   experience: 'Cambridge CELTA, aulas para adultos.',
   languages: ['en', 'fr'],
 };
 
-describe('validação do cadastro de professor', () => {
-  it('normaliza o e-mail e aceita o payload completo', () => {
-    const result = validateTeacherRegistration(valid);
+describe('validação da candidatura de professor', () => {
+  it('aceita o payload completo', () => {
+    const result = validateTeacherApplication(valid);
 
-    expect(result).toEqual({ ok: true, data: { ...valid, email: 'prof@example.com' } });
+    expect(result).toEqual({ ok: true, data: valid });
   });
 
   it('exige bio e experiência', () => {
-    expect(validateTeacherRegistration({ ...valid, bio: '   ' })).toEqual({ ok: false, error: 'REQUIRED' });
-    expect(validateTeacherRegistration({ ...valid, experience: '' })).toEqual({ ok: false, error: 'REQUIRED' });
+    expect(validateTeacherApplication({ ...valid, bio: '   ' })).toEqual({ ok: false, error: 'REQUIRED' });
+    expect(validateTeacherApplication({ ...valid, experience: '' })).toEqual({ ok: false, error: 'REQUIRED' });
   });
 
   it('exige pelo menos um idioma válido', () => {
-    expect(validateTeacherRegistration({ ...valid, languages: [] })).toEqual({ ok: false, error: 'REQUIRED' });
-    expect(validateTeacherRegistration({ ...valid, languages: ['de'] })).toEqual({ ok: false, error: 'REQUIRED' });
+    expect(validateTeacherApplication({ ...valid, languages: [] })).toEqual({ ok: false, error: 'REQUIRED' });
+    expect(validateTeacherApplication({ ...valid, languages: ['de'] })).toEqual({ ok: false, error: 'REQUIRED' });
   });
 
   it('ignora qualquer role enviada pelo cliente', () => {
-    const result = validateTeacherRegistration({ ...valid, role: 'app_admin' });
+    const result = validateTeacherApplication({ ...valid, role: 'app_admin' });
 
     expect(result.ok && 'role' in result.data).toBe(false);
   });
 
   it('ignora um id de anexo enviado pelo cliente no JSON', () => {
-    const result = validateTeacherRegistration({ ...valid, attachment: 42 });
+    const result = validateTeacherApplication({ ...valid, attachment: 42 });
 
     expect(result.ok && 'attachment' in result.data).toBe(false);
-  });
-
-  it('rejeita e-mail inválido', () => {
-    expect(validateTeacherRegistration({ ...valid, email: 'nao-e-email' })).toEqual({
-      ok: false,
-      error: 'INVALID_EMAIL',
-    });
   });
 });
 

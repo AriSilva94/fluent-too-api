@@ -15,10 +15,13 @@ describe('access control', () => {
     ]);
   });
 
-  it('dá ao professor pendente exatamente as permissões do estudante', () => {
+  it('dá ao professor pendente as permissões do estudante mais a transição para estudante', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
 
-    expect(plan.permissions.teacher_pending).toEqual(plan.permissions.student);
+    expect(plan.permissions.teacher_pending).toEqual([
+      ...plan.permissions.student,
+      'api::teacher-application.teacher-application.becomeStudent',
+    ]);
   });
 
   it('dá ao professor as permissões do estudante mais criação de conteúdo', () => {
@@ -129,22 +132,28 @@ describe('access control', () => {
       'api::quiz-attempt.quiz-attempt.find',
       'api::quiz-attempt.quiz-attempt.findOne',
       'api::quiz-attempt.quiz-attempt.create',
+      'api::teacher-application.teacher-application.myApplication',
     ]);
   });
 
-  it('dá ao usuário sem perfil apenas acesso à própria conta', () => {
+  it('dá ao usuário sem perfil apenas acesso à própria conta e às transições de perfil', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
 
     expect(plan.permissions.unassigned).toEqual([
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',
+      'api::teacher-application.teacher-application.becomeStudent',
+      'api::teacher-application.teacher-application.becomeTeacher',
+      'api::teacher-application.teacher-application.myApplication',
     ]);
   });
 
-  it('não deixa o usuário sem perfil tocar em quiz nem em candidatura', () => {
+  it('não deixa o usuário sem perfil tocar em quiz nem em revisão de candidatura', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
 
-    expect(plan.permissions.unassigned.some((action) => action.startsWith('api::'))).toBe(false);
+    expect(plan.permissions.unassigned).not.toContain('api::quiz.quiz.find');
+    expect(plan.permissions.unassigned).not.toContain('api::teacher-application.teacher-application.find');
+    expect(plan.permissions.unassigned).not.toContain('api::teacher-application.teacher-application.approve');
   });
 });

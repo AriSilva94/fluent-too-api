@@ -1,23 +1,18 @@
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const supportedLanguages = ['pt', 'en', 'fr'];
 
-export type TeacherRegistrationInput = {
-  email: string;
-  password: string;
+export type TeacherApplicationInput = {
   bio: string;
   experience: string;
   languages: string[];
   credentialUrl?: string;
 };
 
-export type TeacherRegistrationResult =
-  | { ok: true; data: TeacherRegistrationInput }
-  | { ok: false; error: 'REQUIRED' | 'INVALID_EMAIL' | 'WEAK_PASSWORD' };
+export type TeacherApplicationResult =
+  | { ok: true; data: TeacherApplicationInput }
+  | { ok: false; error: 'REQUIRED' };
 
-export function validateTeacherRegistration(input: unknown): TeacherRegistrationResult {
+export function validateTeacherApplication(input: unknown): TeacherApplicationResult {
   const value = (input ?? {}) as Record<string, unknown>;
-  const email = String(value.email ?? '').trim().toLowerCase();
-  const password = String(value.password ?? '');
   const bio = String(value.bio ?? '').trim();
   const experience = String(value.experience ?? '').trim();
   const languages = Array.isArray(value.languages)
@@ -25,15 +20,11 @@ export function validateTeacherRegistration(input: unknown): TeacherRegistration
     : [];
   const credentialUrl = String(value.credentialUrl ?? '').trim();
 
-  if (!emailPattern.test(email)) return { ok: false, error: 'INVALID_EMAIL' };
-  if (password.length < 8) return { ok: false, error: 'WEAK_PASSWORD' };
   if (!bio || !experience || languages.length === 0) return { ok: false, error: 'REQUIRED' };
 
   return {
     ok: true,
     data: {
-      email,
-      password,
       bio,
       experience,
       languages,
