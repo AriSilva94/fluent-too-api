@@ -9,7 +9,23 @@ export type TeacherApplicationInput = {
 
 export type TeacherApplicationResult =
   | { ok: true; data: TeacherApplicationInput }
-  | { ok: false; error: 'REQUIRED' };
+  | { ok: false; error: 'REQUIRED' | 'INVALID_URL' };
+
+/**
+ * O link vira o `href` de um link vivo na fila de aprovação do admin: um
+ * `javascript:` enviado por curl executaria na origem autenticada de quem revisa.
+ * Só http/https passam — e uma string relativa nem chega a ser uma URL absoluta.
+ */
+export function isHttpUrl(value: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+
+  return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+}
 
 export function validateTeacherApplication(input: unknown): TeacherApplicationResult {
   const value = (input ?? {}) as Record<string, unknown>;
@@ -26,6 +42,7 @@ export function validateTeacherApplication(input: unknown): TeacherApplicationRe
   const credentialUrl = String(value.credentialUrl ?? '').trim();
 
   if (!bio || !experience || languages.length === 0) return { ok: false, error: 'REQUIRED' };
+  if (credentialUrl && !isHttpUrl(credentialUrl)) return { ok: false, error: 'INVALID_URL' };
 
   return {
     ok: true,

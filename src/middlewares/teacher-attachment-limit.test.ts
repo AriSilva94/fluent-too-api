@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import teacherAttachmentLimit, { checkContentLength, MAX_TEACHER_REGISTER_BODY_BYTES } from './teacher-attachment-limit';
+import teacherAttachmentLimit, {
+  checkContentLength,
+  MAX_TEACHER_REGISTER_BODY_BYTES,
+  normalizePath,
+} from './teacher-attachment-limit';
 
 function createContext(path: string, method: string, contentLength?: string) {
   return {
@@ -55,5 +59,23 @@ describe('rota guardada pelo middleware', () => {
     await guard(ctx, next);
 
     expect(next).toHaveBeenCalledOnce();
+  });
+});
+
+describe('normalização da barra final', () => {
+  it('guarda /api/profile/teacher/ — o roteador do Koa não é estrito', async () => {
+    const guard = teacherAttachmentLimit({} as any, {} as any);
+    const next = vi.fn();
+
+    const ctx = createContext('/api/profile/teacher/', 'POST', String(MAX_TEACHER_REGISTER_BODY_BYTES + 1));
+    await guard(ctx, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(ctx.status).toBe(413);
+  });
+
+  it('mantém a raiz intacta ao normalizar', () => {
+    expect(normalizePath('/')).toBe('/');
+    expect(normalizePath('/api/profile/teacher//')).toBe('/api/profile/teacher');
   });
 });

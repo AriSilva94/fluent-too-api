@@ -1,4 +1,3 @@
-import { rm } from 'node:fs/promises';
 import type { Core } from '@strapi/strapi';
 import { canBecomeStudent, canBecomeTeacher } from '../../../auth/profile-transitions';
 import { validateAttachmentFile, validateTeacherApplication } from '../services/registration';
@@ -35,20 +34,10 @@ async function loadUserWithRole(strapi: Core.Strapi, id: number | string | undef
 }
 
 /**
- * Mesma limpeza de `registerTeacher`: o middleware `strapi::body` só remove os
- * arquivos temporários do campo `files`, não do campo `attachment` do formidable.
- * Precisa rodar em toda saída da rota, inclusive nas recusadas.
+ * O anexo já pode ter sido consumido (ou removido do disco) por quem chama: o
+ * middleware global `teacher-attachment-cleanup` é o dono do arquivo temporário,
+ * porque precisa limpá-lo também nas saídas em que este controller não roda.
  */
-async function removeTempFile(strapi: Core.Strapi, file: any) {
-  const filepath = file?.filepath ?? file?.path;
-  if (!filepath) return;
-  try {
-    await rm(filepath, { force: true });
-  } catch (cleanupError) {
-    strapi.log?.error?.('Falha ao remover arquivo temporário da candidatura de professor', cleanupError);
-  }
-}
-
 async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any, attachmentFile: any) {
   const validation = validateTeacherApplication(ctx.request.body);
   if (!validation.ok) return ctx.badRequest(validation.error);
@@ -162,11 +151,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     if (existingApplication) return ctx.badRequest('TEACHER_APPLICATION_EXISTS');
 
     const attachmentFile = (ctx.request as any).files?.attachment;
-    try {
-      return await createTeacherApplication(strapi, ctx, user, attachmentFile);
-    } finally {
-      await removeTempFile(strapi, attachmentFile);
-    }
+    return createTeacherApplication(strapi, ctx, user, attachmentFile);
   },
 
   async myApplication(ctx: any) {

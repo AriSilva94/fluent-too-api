@@ -34,9 +34,12 @@ export default {
       grant.google ?? {}
     );
 
+    // As roles precisam existir ANTES do `advanced` gravar `default_role: 'unassigned'`:
+    // uma falha no meio do caminho deixaria persistida uma role padrão inexistente, e
+    // aí todo registro passaria a dar 500.
+    await ensureAppAccessControl(strapi, process.env.APP_ADMIN_EMAIL ?? 'ariovaldo.bsjunior@gmail.com');
     await setStoreValue(strapi, 'advanced', advanced);
     await setStoreValue(strapi, 'grant', grant);
     await setStoreValue(strapi, 'email', email);
-    await ensureAppAccessControl(strapi, process.env.APP_ADMIN_EMAIL ?? 'ariovaldo.bsjunior@gmail.com');
   },
 };

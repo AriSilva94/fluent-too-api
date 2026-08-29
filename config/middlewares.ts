@@ -18,7 +18,13 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
   // Recusa o multipart do cadastro de professor por content-length ANTES do
   // parser gravar o arquivo em disco.
   'global::teacher-attachment-limit',
+  // Limita as rotas de perfil por IP antes do parser: o `rateLimit` de rota só é
+  // composto depois de `authenticate`/`authorize` e não alcança a rajada anônima.
+  'global::profile-rate-limit',
   'strapi::body',
+  // Remove o arquivo temporário do anexo em TODA saída da rota — inclusive quando a
+  // autenticação responde 401/403 e o controller nunca chega a rodar.
+  'global::teacher-attachment-cleanup',
   {
     name: 'strapi::session',
     config: {

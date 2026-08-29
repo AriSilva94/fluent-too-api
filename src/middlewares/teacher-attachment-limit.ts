@@ -11,6 +11,15 @@ export type ContentLengthCheck =
   | { ok: false; error: 'FILE_TOO_LARGE' | 'LENGTH_REQUIRED' };
 
 /**
+ * O roteador do Koa não roda em modo estrito: `/api/profile/teacher/` cai no mesmo
+ * handler que `/api/profile/teacher`. Comparar `ctx.path` cru deixava a barra final
+ * pular esta guarda e o formidable voltar ao teto padrão de 200 MB.
+ */
+export function normalizePath(path: string): string {
+  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+}
+
+/**
  * O middleware `strapi::body` grava o arquivo em disco antes de qualquer validação
  * de aplicação (o teto real seria o padrão de 200 MB do formidable). Como o corpo é
  * consumido pelo parser global, que roda ANTES do roteador, a recusa precisa
@@ -27,7 +36,7 @@ export function checkContentLength(header: string | undefined, maxBytes: number)
 }
 
 const middleware: Core.MiddlewareFactory = () => async (ctx, next) => {
-  if (ctx.method !== 'POST' || ctx.path !== TEACHER_REGISTER_PATH) return next();
+  if (ctx.method !== 'POST' || normalizePath(ctx.path) !== TEACHER_REGISTER_PATH) return next();
 
   const result = checkContentLength(ctx.request.headers['content-length'], MAX_TEACHER_REGISTER_BODY_BYTES);
   if (!result.ok) {

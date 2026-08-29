@@ -43,6 +43,32 @@ describe('validação da candidatura de professor', () => {
 
     expect(result.ok && 'attachment' in result.data).toBe(false);
   });
+
+  it('aceita um credentialUrl http/https', () => {
+    expect(validateTeacherApplication({ ...valid, credentialUrl: 'https://exemplo.com/certificado' })).toEqual({
+      ok: true,
+      data: { ...valid, credentialUrl: 'https://exemplo.com/certificado' },
+    });
+    expect(validateTeacherApplication({ ...valid, credentialUrl: 'http://exemplo.com' }).ok).toBe(true);
+  });
+
+  it('rejeita um credentialUrl javascript:, que executaria no admin que revisa', () => {
+    expect(validateTeacherApplication({ ...valid, credentialUrl: 'javascript:alert(1)' })).toEqual({
+      ok: false,
+      error: 'INVALID_URL',
+    });
+  });
+
+  it('rejeita um credentialUrl relativo, que não é uma URL absoluta', () => {
+    expect(validateTeacherApplication({ ...valid, credentialUrl: '/certificado.pdf' })).toEqual({
+      ok: false,
+      error: 'INVALID_URL',
+    });
+    expect(validateTeacherApplication({ ...valid, credentialUrl: 'exemplo.com/certificado' })).toEqual({
+      ok: false,
+      error: 'INVALID_URL',
+    });
+  });
 });
 
 describe('validação do arquivo de anexo (attachment)', () => {
