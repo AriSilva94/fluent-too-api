@@ -4,7 +4,7 @@ import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from 
 describe('auth config', () => {
   it('preserva campos existentes e força cadastro com confirmação', () => {
     expect(buildAdvancedSettings({ default_role: 'public', extra: true }, 'https://app.example.com')).toEqual({
-      default_role: 'student',
+      default_role: 'unassigned',
       extra: true,
       unique_email: true,
       allow_register: true,

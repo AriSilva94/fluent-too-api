@@ -6,7 +6,7 @@ export function buildAdvancedSettings(current: Record<string, unknown>, frontend
     email_confirmation: true,
     email_reset_password: `${trimTrailingSlash(frontendUrl)}/auth/reset-password`,
     email_confirmation_redirection: `${trimTrailingSlash(frontendUrl)}/auth/email-confirmed`,
-    default_role: 'student',
+    default_role: 'unassigned',
   };
 }
 

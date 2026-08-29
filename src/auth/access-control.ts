@@ -2,7 +2,7 @@ import type { Core } from '@strapi/strapi';
 import { migrateAuthenticatedUsersToStudent } from './role-migration';
 import { isAdminRole } from './roles';
 
-type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student';
+type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student' | 'unassigned';
 type AccessRoleType = AppRoleType | 'public' | 'authenticated';
 
 type AppRoleDefinition = {
@@ -106,6 +106,7 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
       { name: 'Teacher', type: 'teacher', description: 'Can create quizzes and blog posts' },
       { name: 'Teacher (pending)', type: 'teacher_pending', description: 'Teacher waiting for manual approval' },
       { name: 'Student', type: 'student', description: 'Can take quizzes and see own history' },
+      { name: 'Unassigned', type: 'unassigned', description: 'Signed up but has not chosen a profile yet' },
     ],
     permissions: {
       super_admin: adminActions,
@@ -113,6 +114,7 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
       teacher: [...studentActions, ...contentCreationActions],
       teacher_pending: [...studentActions],
       student: [...studentActions],
+      unassigned: [...authenticatedUserActions],
       public: ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'],
       authenticated: [...studentActions],
     },

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAccessControlPlan } from './access-control';
 
 describe('access control', () => {
-  it('define as cinco roles do aplicativo', () => {
+  it('define as seis roles do aplicativo', () => {
     const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
 
     expect(plan.roles.map((role) => role.type)).toEqual([
@@ -11,6 +11,7 @@ describe('access control', () => {
       'teacher',
       'teacher_pending',
       'student',
+      'unassigned',
     ]);
   });
 
@@ -129,5 +130,21 @@ describe('access control', () => {
       'api::quiz-attempt.quiz-attempt.findOne',
       'api::quiz-attempt.quiz-attempt.create',
     ]);
+  });
+
+  it('dá ao usuário sem perfil apenas acesso à própria conta', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+
+    expect(plan.permissions.unassigned).toEqual([
+      'plugin::users-permissions.user.me',
+      'plugin::users-permissions.auth.logout',
+      'plugin::users-permissions.auth.changePassword',
+    ]);
+  });
+
+  it('não deixa o usuário sem perfil tocar em quiz nem em candidatura', () => {
+    const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+
+    expect(plan.permissions.unassigned.some((action) => action.startsWith('api::'))).toBe(false);
   });
 });
