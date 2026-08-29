@@ -68,7 +68,7 @@ Em `src/auth/access-control.test.ts`, no teste que lista as roles, incluir `'una
 
 ```ts
 it('dá ao usuário sem perfil apenas acesso à própria conta', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
 
   expect(plan.permissions.unassigned).toEqual([
     'plugin::users-permissions.user.me',
@@ -78,7 +78,7 @@ it('dá ao usuário sem perfil apenas acesso à própria conta', () => {
 });
 
 it('não deixa o usuário sem perfil tocar em quiz nem em candidatura', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
 
   expect(plan.permissions.unassigned.some((action) => action.startsWith('api::'))).toBe(false);
 });

@@ -1,6 +1,6 @@
 import type { Core } from '@strapi/strapi';
 import { ensureAppAccessControl } from './auth/access-control';
-import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './auth/config';
+import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider, resolveAppAdminEmail } from './auth/config';
 import { patchUploadServiceForWebp } from './upload/webp';
 
 async function setStoreValue(strapi: Core.Strapi, key: string, value: unknown) {
@@ -37,7 +37,7 @@ export default {
     // As roles precisam existir ANTES do `advanced` gravar `default_role: 'unassigned'`:
     // uma falha no meio do caminho deixaria persistida uma role padrão inexistente, e
     // aí todo registro passaria a dar 500.
-    await ensureAppAccessControl(strapi, process.env.APP_ADMIN_EMAIL ?? 'ariovaldo.bsjunior@gmail.com');
+    await ensureAppAccessControl(strapi, resolveAppAdminEmail(process.env.APP_ADMIN_EMAIL));
     await setStoreValue(strapi, 'advanced', advanced);
     await setStoreValue(strapi, 'grant', grant);
     await setStoreValue(strapi, 'email', email);

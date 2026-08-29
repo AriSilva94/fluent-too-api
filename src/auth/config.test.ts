@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './config';
+import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider, resolveAppAdminEmail } from './config';
 
 describe('auth config', () => {
   it('preserva campos existentes e força cadastro com confirmação', () => {
@@ -22,6 +22,12 @@ describe('auth config', () => {
       secret: 'secret',
       callback: 'https://api.example.com/api/connect/google/callback',
     });
+  });
+
+  it('não usa fallback hardcoded para admin da aplicação', () => {
+    expect(resolveAppAdminEmail(undefined)).toBeUndefined();
+    expect(resolveAppAdminEmail('')).toBeUndefined();
+    expect(resolveAppAdminEmail('  ADMIN@EXAMPLE.COM  ')).toBe('admin@example.com');
   });
 
   it('monta templates sem segredos', () => {

@@ -20,7 +20,7 @@
 - Sem libs novas nos dois repos.
 - Textos de UI ficam em `messages/pt-br.json`, `messages/en-us.json`, `messages/fr-fr.json` — os três sempre juntos.
 - Não alterar o fluxo de registro/login do estudante: mesma rota, mesma validação, mesma confirmação de e-mail.
-- `syncPermissions` para `public` e `authenticated` continua com `preserveExisting: true` — o role `public` tem permissões concedidas manualmente pelo admin (leitura de `blog-post`, por exemplo) que não podem ser apagadas.
+- `syncPermissions` para `public` e `authenticated` deve ser exato, sem `preserveExisting`: permissões públicas devem estar declaradas no plano de código para evitar permissões acidentais persistentes.
 
 ---
 
@@ -78,7 +78,7 @@ Em `src/auth/access-control.test.ts`, substituir o teste `'define roles do aplic
 
 ```ts
 it('define as cinco roles do aplicativo', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
 
   expect(plan.roles.map((role) => role.type)).toEqual([
     'super_admin',
@@ -90,13 +90,13 @@ it('define as cinco roles do aplicativo', () => {
 });
 
 it('dá ao professor pendente exatamente as permissões do estudante', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
 
   expect(plan.permissions.teacher_pending).toEqual(plan.permissions.student);
 });
 
 it('dá ao professor as permissões do estudante mais criação de conteúdo', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
   const extra = plan.permissions.teacher.filter((action) => !plan.permissions.student.includes(action));
 
   expect(extra).toEqual([
@@ -110,7 +110,7 @@ it('dá ao professor as permissões do estudante mais criação de conteúdo', (
 });
 
 it('permite apenas admins revisarem candidaturas', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
   const review = 'api::teacher-application.teacher-application.find';
 
   expect(plan.permissions.app_admin).toContain(review);
@@ -121,7 +121,7 @@ it('permite apenas admins revisarem candidaturas', () => {
 });
 
 it('mantém authenticated com as permissões de estudante para usuários ainda não migrados', () => {
-  const plan = buildAccessControlPlan('ariovaldo.bsjunior@gmail.com');
+  const plan = buildAccessControlPlan('admin@example.com');
 
   expect(plan.permissions.authenticated).toEqual(plan.permissions.student);
 });
@@ -1503,7 +1503,7 @@ export async function POST(request: Request) {
 }
 ```
 
-Se o upload público não estiver liberado no Strapi, a permissão `plugin::upload.content-api.upload` precisa estar ativa para o role `public` — conferir em Settings → Roles → Public e anotar no Step 7.
+Upload público não deve ser liberado no Strapi. O cadastro de professor envia anexos por rota autenticada da aplicação, e a API encaminha ao Strapi com o token do usuário autenticado.
 
 - [ ] **Step 6: Criar as telas**
 

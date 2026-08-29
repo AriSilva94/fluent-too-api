@@ -12,7 +12,7 @@ type AppRoleDefinition = {
 };
 
 type AccessControlPlan = {
-  adminEmail: string;
+  adminEmail?: string;
   roles: AppRoleDefinition[];
   permissions: Record<AccessRoleType, string[]>;
 };
@@ -84,13 +84,24 @@ const teacherApplicationReviewActions = [
   'api::teacher-application.teacher-application.reject',
 ];
 
+const publicAuthActions = [
+  'plugin::users-permissions.auth.callback',
+  'plugin::users-permissions.auth.connect',
+  'plugin::users-permissions.auth.emailConfirmation',
+  'plugin::users-permissions.auth.forgotPassword',
+  'plugin::users-permissions.auth.refresh',
+  'plugin::users-permissions.auth.register',
+  'plugin::users-permissions.auth.resetPassword',
+  'plugin::users-permissions.auth.sendEmailConfirmation',
+];
+
 const becomeStudentAction = 'api::teacher-application.profile.becomeStudent';
 const becomeTeacherAction = 'api::teacher-application.profile.becomeTeacher';
 const myApplicationAction = 'api::teacher-application.profile.myApplication';
 
 const studentActions = [...authenticatedUserActions, ...studentHistoryActions, myApplicationAction];
 
-export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
+export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
   const adminActions = [
     ...authenticatedUserActions,
     ...readActions,
@@ -103,7 +114,7 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
   ];
 
   return {
-    adminEmail: adminEmail.trim().toLowerCase(),
+    adminEmail: adminEmail?.trim().toLowerCase() || undefined,
     roles: [
       { name: 'Super Admin', type: 'super_admin', description: 'Full application access' },
       { name: 'Admin', type: 'app_admin', description: 'Can view every app resource and manage quizzes' },
@@ -119,13 +130,19 @@ export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
       teacher_pending: [...studentActions, becomeStudentAction],
       student: [...studentActions],
       unassigned: [...authenticatedUserActions, becomeStudentAction, becomeTeacherAction, myApplicationAction],
-      public: ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'],
+      public: [
+        'api::blog-post.blog-post.find',
+        'api::blog-post.blog-post.findOne',
+        'api::quiz.quiz.find',
+        'api::quiz.quiz.findOne',
+        ...publicAuthActions,
+      ],
       authenticated: [...studentActions],
     },
   };
 }
 
-export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail: string) {
+export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail?: string) {
   const plan = buildAccessControlPlan(adminEmail);
   const roles = new Map<AppRoleType, { id: number | string }>();
 
@@ -137,16 +154,16 @@ export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail: st
 
   const publicRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'public' } });
   if (publicRole) {
-    await syncPermissions(strapi, publicRole.id, plan.permissions.public, { preserveExisting: true });
+    await syncPermissions(strapi, publicRole.id, plan.permissions.public);
   }
 
   const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'authenticated' } });
   if (authenticatedRole) {
-    await syncPermissions(strapi, authenticatedRole.id, plan.permissions.authenticated, { preserveExisting: true });
+    await syncPermissions(strapi, authenticatedRole.id, plan.permissions.authenticated);
   }
 
   const adminRole = roles.get('app_admin');
-  if (adminRole) {
+  if (adminRole && plan.adminEmail) {
     await assignUserRole(strapi, plan.adminEmail, adminRole.id);
   }
 

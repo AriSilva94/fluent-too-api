@@ -10,6 +10,11 @@ export function buildAdvancedSettings(current: Record<string, unknown>, frontend
   };
 }
 
+export function resolveAppAdminEmail(value?: string) {
+  const email = value?.trim().toLowerCase();
+  return email || undefined;
+}
+
 export function buildGoogleProvider(
   credentials: { clientId?: string; clientSecret?: string },
   strapiPublicUrl: string,
