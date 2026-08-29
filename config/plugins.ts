@@ -24,6 +24,7 @@ const deniedExecutableTypes = [
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => {
   const useS3Upload = Boolean(env('S3_BUCKET') && env('S3_ACCESS_KEY_ID') && env('S3_ACCESS_SECRET'));
+  const s3Acl = env('S3_ACL', undefined);
 
   return {
     'users-permissions': {
@@ -101,8 +102,8 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
                   },
                   params: {
                     Bucket: env('S3_BUCKET'),
-                    ACL: env('S3_ACL', undefined),
                     signedUrlExpires: env.int('S3_SIGNED_URL_EXPIRES', 900),
+                    ...(s3Acl ? { ACL: s3Acl } : {}),
                   },
                 },
               },
