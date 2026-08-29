@@ -20,7 +20,7 @@ describe('access control', () => {
 
     expect(plan.permissions.teacher_pending).toEqual([
       ...plan.permissions.student,
-      'api::teacher-application.teacher-application.becomeStudent',
+      'api::teacher-application.profile.becomeStudent',
     ]);
   });
 
@@ -132,7 +132,7 @@ describe('access control', () => {
       'api::quiz-attempt.quiz-attempt.find',
       'api::quiz-attempt.quiz-attempt.findOne',
       'api::quiz-attempt.quiz-attempt.create',
-      'api::teacher-application.teacher-application.myApplication',
+      'api::teacher-application.profile.myApplication',
     ]);
   });
 
@@ -143,9 +143,9 @@ describe('access control', () => {
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',
-      'api::teacher-application.teacher-application.becomeStudent',
-      'api::teacher-application.teacher-application.becomeTeacher',
-      'api::teacher-application.teacher-application.myApplication',
+      'api::teacher-application.profile.becomeStudent',
+      'api::teacher-application.profile.becomeTeacher',
+      'api::teacher-application.profile.myApplication',
     ]);
   });
 

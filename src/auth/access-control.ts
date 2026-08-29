@@ -84,9 +84,9 @@ const teacherApplicationReviewActions = [
   'api::teacher-application.teacher-application.reject',
 ];
 
-const becomeStudentAction = 'api::teacher-application.teacher-application.becomeStudent';
-const becomeTeacherAction = 'api::teacher-application.teacher-application.becomeTeacher';
-const myApplicationAction = 'api::teacher-application.teacher-application.myApplication';
+const becomeStudentAction = 'api::teacher-application.profile.becomeStudent';
+const becomeTeacherAction = 'api::teacher-application.profile.becomeTeacher';
+const myApplicationAction = 'api::teacher-application.profile.myApplication';
 
 const studentActions = [...authenticatedUserActions, ...studentHistoryActions, myApplicationAction];
 
