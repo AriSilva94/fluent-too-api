@@ -76,9 +76,9 @@ function getDatabaseConfig() {
   return {
     host: process.env.DATABASE_HOST || 'localhost',
     port: Number.parseInt(process.env.DATABASE_PORT || '5432', 10),
-    database: process.env.DATABASE_NAME || 'strapi',
-    user: process.env.DATABASE_USERNAME || process.env.DATABASE_USER || 'strapi',
-    password: process.env.DATABASE_PASSWORD || '',
+    database: process.env.DATABASE_NAME || process.env.POSTGRES_DB || 'strapi',
+    user: process.env.DATABASE_USERNAME || process.env.DATABASE_USER || process.env.POSTGRES_USER || 'strapi',
+    password: process.env.DATABASE_PASSWORD || process.env.POSTGRES_PASSWORD || '',
     ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
   };
 }
