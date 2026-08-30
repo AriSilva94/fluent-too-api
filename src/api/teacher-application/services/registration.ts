@@ -9,7 +9,14 @@ export type TeacherApplicationInput = {
 
 export type TeacherApplicationResult =
   | { ok: true; data: TeacherApplicationInput }
-  | { ok: false; error: 'REQUIRED' | 'INVALID_URL' };
+  | { ok: false; error: 'REQUIRED' | 'INVALID_URL' | 'TOO_LONG' };
+
+// O controller grava via `strapi.db.query`, que não passa pela validação de schema
+// do Content API (nem o `maxLength` do content-type entra em vigor aqui). Sem este
+// limite, um payload arbitrariamente grande engordava o banco e as respostas do admin.
+const MAX_BIO_LENGTH = 2000;
+const MAX_EXPERIENCE_LENGTH = 2000;
+const MAX_CREDENTIAL_URL_LENGTH = 2048;
 
 /**
  * O link vira o `href` de um link vivo na fila de aprovação do admin: um
@@ -42,6 +49,9 @@ export function validateTeacherApplication(input: unknown): TeacherApplicationRe
   const credentialUrl = String(value.credentialUrl ?? '').trim();
 
   if (!bio || !experience || languages.length === 0) return { ok: false, error: 'REQUIRED' };
+  if (bio.length > MAX_BIO_LENGTH || experience.length > MAX_EXPERIENCE_LENGTH || credentialUrl.length > MAX_CREDENTIAL_URL_LENGTH) {
+    return { ok: false, error: 'TOO_LONG' };
+  }
   if (credentialUrl && !isHttpUrl(credentialUrl)) return { ok: false, error: 'INVALID_URL' };
 
   return {

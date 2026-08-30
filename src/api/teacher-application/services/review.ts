@@ -83,20 +83,31 @@ export async function reviewApplication(strapi: any, ctx: any, decision: 'approv
   // no momento da escrita, fechando a janela de corrida entre duas revisões
   // concorrentes que ambas passaram pela pré-checagem acima. A promoção de
   // role só acontece depois de confirmar que esta chamada venceu a corrida.
-  const updated = await strapi.db.query(UID).update({
-    where: { id: application.id, status: 'pending' },
-    data: result.data,
-    populate: SAFE_POPULATE,
+  //
+  // As duas escritas (candidatura + role) rodam na mesma transação: sem isso,
+  // uma falha entre elas deixava a candidatura aprovada com o usuário ainda
+  // sem a role `teacher`, e uma nova tentativa de revisão era barrada por
+  // ALREADY_REVIEWED sem jeito de reconciliar.
+  const updated = await strapi.db.transaction(async () => {
+    const reviewedApplication = await strapi.db.query(UID).update({
+      where: { id: application.id, status: 'pending' },
+      data: result.data,
+      populate: SAFE_POPULATE,
+    });
+
+    if (!reviewedApplication) return null;
+
+    if (decision === 'approved') {
+      await strapi.db.query('plugin::users-permissions.user').update({
+        where: { id: application.user.id },
+        data: { role: teacherRoleId },
+      });
+    }
+
+    return reviewedApplication;
   });
 
   if (!updated) return ctx.conflict('ALREADY_REVIEWED');
-
-  if (decision === 'approved') {
-    await strapi.db.query('plugin::users-permissions.user').update({
-      where: { id: application.user.id },
-      data: { role: teacherRoleId },
-    });
-  }
 
   ctx.body = { data: updated };
 }

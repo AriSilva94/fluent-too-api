@@ -19,6 +19,11 @@ describe('validação da candidatura de professor', () => {
     expect(validateTeacherApplication({ ...valid, experience: '' })).toEqual({ ok: false, error: 'REQUIRED' });
   });
 
+  it('recusa bio ou experiência acima do limite de tamanho', () => {
+    expect(validateTeacherApplication({ ...valid, bio: 'x'.repeat(2001) })).toEqual({ ok: false, error: 'TOO_LONG' });
+    expect(validateTeacherApplication({ ...valid, experience: 'x'.repeat(2001) })).toEqual({ ok: false, error: 'TOO_LONG' });
+  });
+
   it('exige pelo menos um idioma válido', () => {
     expect(validateTeacherApplication({ ...valid, languages: [] })).toEqual({ ok: false, error: 'REQUIRED' });
     expect(validateTeacherApplication({ ...valid, languages: ['de'] })).toEqual({ ok: false, error: 'REQUIRED' });

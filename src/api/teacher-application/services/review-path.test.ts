@@ -12,6 +12,9 @@ function createStrapi({ users, applications }: { users: Row[]; applications: Row
 
   const strapi = {
     db: {
+      async transaction(callback: () => Promise<any>) {
+        return callback();
+      },
       query(uid: string) {
         if (uid === USER_UID) {
           return {

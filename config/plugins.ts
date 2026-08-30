@@ -1,7 +1,11 @@
 import type { Core } from '@strapi/strapi';
 
 const allowedMediaTypes = [
-  'image/*',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/avif',
   'video/*',
   'audio/*',
   'application/pdf',
@@ -12,6 +16,9 @@ const allowedMediaTypes = [
 ];
 
 const deniedExecutableTypes = [
+  // SVG pode carregar <script> e referências externas: nunca deve ser aceito em
+  // upload público, mesmo que uma futura mudança amplie `allowedMediaTypes`.
+  'image/svg+xml',
   'application/vnd.microsoft.portable-executable',
   'application/x-msdownload',
   'application/x-msdos-program',

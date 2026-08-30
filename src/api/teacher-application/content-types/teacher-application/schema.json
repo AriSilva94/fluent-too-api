@@ -29,14 +29,17 @@
     },
     "bio": {
       "type": "text",
-      "required": true
+      "required": true,
+      "maxLength": 2000
     },
     "experience": {
       "type": "text",
-      "required": true
+      "required": true,
+      "maxLength": 2000
     },
     "credentialUrl": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2048
     },
     "attachment": {
       "type": "media",

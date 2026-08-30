@@ -2,6 +2,15 @@ import { factories } from '@strapi/strapi';
 import { getReviewer, reviewApplication, SAFE_POPULATE } from '../services/review';
 
 const UID = 'api::teacher-application.teacher-application' as never;
+const MAX_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 25;
+const allowedStatuses = ['pending', 'approved', 'rejected'];
+
+function resolvePagination(query: Record<string, unknown>) {
+  const page = Math.max(1, Number(query.page) || 1);
+  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(query.pageSize) || DEFAULT_PAGE_SIZE));
+  return { page, pageSize, offset: (page - 1) * pageSize };
+}
 
 export default factories.createCoreController(UID, ({ strapi }) => ({
   async find(ctx) {
@@ -9,13 +18,21 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
     if (!reviewer) return ctx.forbidden();
 
     const status = ctx.query?.status;
-    const entries = await strapi.db.query(UID).findMany({
-      where: typeof status === 'string' ? { status } : {},
-      orderBy: { createdAt: 'desc' },
-      populate: SAFE_POPULATE,
-    });
+    const where = typeof status === 'string' && allowedStatuses.includes(status) ? { status } : {};
+    const { page, pageSize, offset } = resolvePagination(ctx.query ?? {});
 
-    ctx.body = { data: entries };
+    const [entries, total] = await Promise.all([
+      strapi.db.query(UID).findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        populate: SAFE_POPULATE,
+        limit: pageSize,
+        offset,
+      }),
+      strapi.db.query(UID).count({ where }),
+    ]);
+
+    ctx.body = { data: entries, meta: { pagination: { page, pageSize, total, pageCount: Math.ceil(total / pageSize) } } };
   },
 
   async findOne(ctx) {
