@@ -1,6 +1,8 @@
 import type { Core } from '@strapi/strapi';
+import { migrateAuthenticatedUsersToStudent } from './role-migration';
+import { isAdminRole } from './roles';
 
-type AppRoleType = 'app_admin' | 'teacher';
+type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student' | 'unassigned';
 type AccessRoleType = AppRoleType | 'public' | 'authenticated';
 
 type AppRoleDefinition = {
@@ -10,7 +12,7 @@ type AppRoleDefinition = {
 };
 
 type AccessControlPlan = {
-  adminEmail: string;
+  adminEmail?: string;
   roles: AppRoleDefinition[];
   permissions: Record<AccessRoleType, string[]>;
 };
@@ -30,6 +32,8 @@ const readActions = [
   'api::quiz.quiz.findOne',
   'api::quiz-attempt.quiz-attempt.find',
   'api::quiz-attempt.quiz-attempt.findOne',
+  'api::blog-post.blog-post.find',
+  'api::blog-post.blog-post.findOne',
 ];
 
 const quizManagementActions = [
@@ -60,36 +64,83 @@ const studentHistoryActions = [
   'api::quiz-attempt.quiz-attempt.create',
 ];
 
-export function buildAccessControlPlan(adminEmail: string): AccessControlPlan {
+const blogManagementActions = [
+  'api::blog-post.blog-post.create',
+  'api::blog-post.blog-post.update',
+  'api::blog-post.blog-post.delete',
+];
+
+const contentCreationActions = [
+  'api::quiz.quiz.create',
+  'api::quiz.quiz.update',
+  'api::quiz.quiz.delete',
+  ...blogManagementActions,
+];
+
+const teacherApplicationReviewActions = [
+  'api::teacher-application.teacher-application.find',
+  'api::teacher-application.teacher-application.findOne',
+  'api::teacher-application.teacher-application.approve',
+  'api::teacher-application.teacher-application.reject',
+];
+
+const publicAuthActions = [
+  'plugin::users-permissions.auth.callback',
+  'plugin::users-permissions.auth.connect',
+  'plugin::users-permissions.auth.emailConfirmation',
+  'plugin::users-permissions.auth.forgotPassword',
+  'plugin::users-permissions.auth.refresh',
+  'plugin::users-permissions.auth.register',
+  'plugin::users-permissions.auth.resetPassword',
+  'plugin::users-permissions.auth.sendEmailConfirmation',
+];
+
+const becomeStudentAction = 'api::teacher-application.profile.becomeStudent';
+const becomeTeacherAction = 'api::teacher-application.profile.becomeTeacher';
+const myApplicationAction = 'api::teacher-application.profile.myApplication';
+
+const studentActions = [...authenticatedUserActions, ...studentHistoryActions, myApplicationAction];
+
+export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
+  const adminActions = [
+    ...authenticatedUserActions,
+    ...readActions,
+    ...quizManagementActions.filter((action) => !readActions.includes(action)),
+    ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
+    ...blogManagementActions,
+    ...teacherApplicationReviewActions,
+  ];
+
   return {
-    adminEmail: adminEmail.trim().toLowerCase(),
+    adminEmail: adminEmail?.trim().toLowerCase() || undefined,
     roles: [
-      {
-        name: 'Admin',
-        type: 'app_admin',
-        description: 'Can view every app resource and manage quizzes',
-      },
-      {
-        name: 'Teacher',
-        type: 'teacher',
-        description: 'Can create quizzes',
-      },
+      { name: 'Super Admin', type: 'super_admin', description: 'Full application access' },
+      { name: 'Admin', type: 'app_admin', description: 'Can view every app resource and manage quizzes' },
+      { name: 'Teacher', type: 'teacher', description: 'Can create quizzes and blog posts' },
+      { name: 'Teacher (pending)', type: 'teacher_pending', description: 'Teacher waiting for manual approval' },
+      { name: 'Student', type: 'student', description: 'Can take quizzes and see own history' },
+      { name: 'Unassigned', type: 'unassigned', description: 'Signed up but has not chosen a profile yet' },
     ],
     permissions: {
-      app_admin: [
-        ...authenticatedUserActions,
-        ...readActions,
-        ...quizManagementActions.filter((action) => !readActions.includes(action)),
-        ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
+      super_admin: adminActions,
+      app_admin: adminActions,
+      teacher: [...studentActions, ...contentCreationActions],
+      teacher_pending: [...studentActions, becomeStudentAction],
+      student: [...studentActions],
+      unassigned: [...authenticatedUserActions, becomeStudentAction, becomeTeacherAction, myApplicationAction],
+      public: [
+        'api::blog-post.blog-post.find',
+        'api::blog-post.blog-post.findOne',
+        'api::quiz.quiz.find',
+        'api::quiz.quiz.findOne',
+        ...publicAuthActions,
       ],
-      teacher: [...authenticatedUserActions, ...studentHistoryActions, 'api::quiz.quiz.create'],
-      public: ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'],
-      authenticated: [...authenticatedUserActions, ...studentHistoryActions],
+      authenticated: [...studentActions],
     },
   };
 }
 
-export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail: string) {
+export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail?: string) {
   const plan = buildAccessControlPlan(adminEmail);
   const roles = new Map<AppRoleType, { id: number | string }>();
 
@@ -101,18 +152,20 @@ export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail: st
 
   const publicRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'public' } });
   if (publicRole) {
-    await syncPermissions(strapi, publicRole.id, plan.permissions.public, { preserveExisting: true });
+    await syncPermissions(strapi, publicRole.id, plan.permissions.public);
   }
 
   const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'authenticated' } });
   if (authenticatedRole) {
-    await syncPermissions(strapi, authenticatedRole.id, plan.permissions.authenticated, { preserveExisting: true });
+    await syncPermissions(strapi, authenticatedRole.id, plan.permissions.authenticated);
   }
 
   const adminRole = roles.get('app_admin');
-  if (adminRole) {
+  if (adminRole && plan.adminEmail) {
     await assignUserRole(strapi, plan.adminEmail, adminRole.id);
   }
+
+  await migrateAuthenticatedUsersToStudent(strapi);
 }
 
 async function ensureRole(strapi: Core.Strapi, roleDefinition: AppRoleDefinition) {
@@ -172,9 +225,9 @@ async function assignUserRole(strapi: Core.Strapi, email: string, roleId: number
   if (!email) return;
 
   const userQuery = strapi.db.query('plugin::users-permissions.user');
-  const user = await userQuery.findOne({ where: { email } });
+  const user = await userQuery.findOne({ where: { email }, populate: ['role'] });
 
-  if (!user || user.role?.id === roleId || user.role === roleId) return;
+  if (!user || isAdminRole(user.role?.type)) return;
 
   await userQuery.update({
     where: { id: user.id },

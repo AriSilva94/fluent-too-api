@@ -36,14 +36,12 @@ async function isFirstRun() {
 }
 
 async function setPublicPermissions(newPermissions) {
-  // Find the ID of the public role
   const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
     where: {
       type: 'public',
     },
   });
 
-  // Create the new permissions and link them to the public role
   const allPermissionsToCreate = [];
   Object.keys(newPermissions).map((controller) => {
     const actions = newPermissions[controller];
@@ -68,14 +66,13 @@ function getFileSizeInBytes(filePath) {
 
 function getFileData(fileName) {
   const filePath = path.join('data', 'uploads', fileName);
-  // Parse the file metadata
   const size = getFileSizeInBytes(filePath);
   const ext = fileName.split('.').pop();
   const mimeType = mime.lookup(ext || '') || '';
 
   return {
     filepath: filePath,
-    originalFileName: fileName,
+    originalFilename: fileName,
     size,
     mimetype: mimeType,
   };
@@ -97,10 +94,8 @@ async function uploadFile(file, name) {
     });
 }
 
-// Create an entry and attach files if there are any
 async function createEntry({ model, entry }) {
   try {
-    // Actually create the entry in Strapi
     await strapi.documents(`api::${model}.${model}`).create({
       data: entry,
     });
@@ -115,7 +110,6 @@ async function checkFileExistsBeforeUpload(files) {
   const filesCopy = [...files];
 
   for (const fileName of filesCopy) {
-    // Check if the file already exists in Strapi
     const fileWhereName = await strapi.query('plugin::upload.file').findOne({
       where: {
         name: fileName.replace(/\..*$/, ''),
@@ -123,10 +117,8 @@ async function checkFileExistsBeforeUpload(files) {
     });
 
     if (fileWhereName) {
-      // File exists, don't upload it
       existingFiles.push(fileWhereName);
     } else {
-      // File doesn't exist, upload it
       const fileData = getFileData(fileName);
       const fileNameNoExtension = fileName.split('.').shift();
       const [file] = await uploadFile(fileData, fileNameNoExtension);
@@ -134,7 +126,6 @@ async function checkFileExistsBeforeUpload(files) {
     }
   }
   const allFiles = [...existingFiles, ...uploadedFiles];
-  // If only one file then return only that file
   return allFiles.length === 1 ? allFiles[0] : allFiles;
 }
 
@@ -143,22 +134,15 @@ async function updateBlocks(blocks) {
   for (const block of blocks) {
     if (block.__component === 'shared.media') {
       const uploadedFiles = await checkFileExistsBeforeUpload([block.file]);
-      // Copy the block to not mutate directly
       const blockCopy = { ...block };
-      // Replace the file name on the block with the actual file
       blockCopy.file = uploadedFiles;
       updatedBlocks.push(blockCopy);
     } else if (block.__component === 'shared.slider') {
-      // Get files already uploaded to Strapi or upload new files
       const existingAndUploadedFiles = await checkFileExistsBeforeUpload(block.files);
-      // Copy the block to not mutate directly
       const blockCopy = { ...block };
-      // Replace the file names on the block with the actual files
       blockCopy.files = existingAndUploadedFiles;
-      // Push the updated block
       updatedBlocks.push(blockCopy);
     } else {
-      // Just push the block as is
       updatedBlocks.push(block);
     }
   }
@@ -168,7 +152,7 @@ async function updateBlocks(blocks) {
 
 async function importArticles() {
   for (const article of articles) {
-    const cover = await checkFileExistsBeforeUpload([`${article.slug}.jpg`]);
+    const cover = await checkFileExistsBeforeUpload([`${article.slug}.webp`]);
     const updatedBlocks = await updateBlocks(article.blocks);
 
     await createEntry({
@@ -177,7 +161,6 @@ async function importArticles() {
         ...article,
         cover,
         blocks: updatedBlocks,
-        // Make sure it's not a draft
         publishedAt: Date.now(),
       },
     });
@@ -185,14 +168,13 @@ async function importArticles() {
 }
 
 async function importGlobal() {
-  const favicon = await checkFileExistsBeforeUpload(['favicon.png']);
-  const shareImage = await checkFileExistsBeforeUpload(['default-image.png']);
+  const favicon = await checkFileExistsBeforeUpload(['favicon.webp']);
+  const shareImage = await checkFileExistsBeforeUpload(['default-image.webp']);
   return createEntry({
     model: 'global',
     entry: {
       ...global,
       favicon,
-      // Make sure it's not a draft
       publishedAt: Date.now(),
       defaultSeo: {
         ...global.defaultSeo,
@@ -210,7 +192,6 @@ async function importAbout() {
     entry: {
       ...about,
       blocks: updatedBlocks,
-      // Make sure it's not a draft
       publishedAt: Date.now(),
     },
   });
@@ -237,7 +218,6 @@ async function importAuthors() {
 }
 
 async function importSeedData() {
-  // Allow read of application content types
   await setPublicPermissions({
     article: ['find', 'findOne'],
     category: ['find', 'findOne'],
@@ -246,7 +226,6 @@ async function importSeedData() {
     about: ['find', 'findOne'],
   });
 
-  // Create all entries
   await importCategories();
   await importAuthors();
   await importArticles();

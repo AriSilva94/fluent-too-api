@@ -1,6 +1,3 @@
-/**
- *  author controller
- */
 
 import { factories } from '@strapi/strapi';
 

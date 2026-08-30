@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './config';
+import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider, resolveAppAdminEmail } from './config';
 
 describe('auth config', () => {
   it('preserva campos existentes e força cadastro com confirmação', () => {
     expect(buildAdvancedSettings({ default_role: 'public', extra: true }, 'https://app.example.com')).toEqual({
-      default_role: 'authenticated',
+      default_role: 'unassigned',
       extra: true,
       unique_email: true,
       allow_register: true,
@@ -24,6 +24,12 @@ describe('auth config', () => {
     });
   });
 
+  it('não usa fallback hardcoded para admin da aplicação', () => {
+    expect(resolveAppAdminEmail(undefined)).toBeUndefined();
+    expect(resolveAppAdminEmail('')).toBeUndefined();
+    expect(resolveAppAdminEmail('  ADMIN@EXAMPLE.COM  ')).toBe('admin@example.com');
+  });
+
   it('monta templates sem segredos', () => {
     const templates = buildEmailTemplates('Fluent Too <no-reply@example.com>', 'https://app.example.com');
     expect(templates.reset_password).toMatchObject({
@@ -40,6 +46,14 @@ describe('auth config', () => {
     });
     expect(templates.reset_password.options.message).toContain('<%= URL %>?code=<%= TOKEN %>');
     expect(templates.email_confirmation.options.message).toContain('<%= URL %>?confirmation=<%= CODE %>');
+    expect(templates.reset_password.options.message).toContain('#ff6700');
+    expect(templates.reset_password.options.message).toContain('#4184f9');
+    expect(templates.reset_password.options.message).toContain('Redefinir senha');
+    expect(templates.reset_password.options.message).toContain('Se você não solicitou esta alteração');
+    expect(templates.email_confirmation.options.message).toContain('#ff6700');
+    expect(templates.email_confirmation.options.message).toContain('#4184f9');
+    expect(templates.email_confirmation.options.message).toContain('Confirmar e-mail');
+    expect(templates.email_confirmation.options.message).toContain('Fluent Too');
     expect(JSON.stringify(templates)).not.toContain('secret');
   });
 });

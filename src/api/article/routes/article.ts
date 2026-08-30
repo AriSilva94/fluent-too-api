@@ -1,6 +1,3 @@
-/**
- * article router.
- */
 
 import { factories } from '@strapi/strapi';
 

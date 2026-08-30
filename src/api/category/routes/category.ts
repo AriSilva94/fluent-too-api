@@ -1,6 +1,3 @@
-/**
- * category router.
- */
 
 import { factories } from '@strapi/strapi';
 

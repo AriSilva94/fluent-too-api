@@ -1,5 +1,13 @@
 import { factories } from '@strapi/strapi';
-import { buildAttemptCreateData, buildAttemptDuplicateFilters, buildAttemptFindFilters } from '../services/access';
+import {
+  buildAttemptCreateData,
+  buildAttemptDuplicateFilters,
+  buildAttemptFindFilters,
+  QUIZ_SELECT_FOR_GRADING,
+  SAFE_QUIZ_POPULATE,
+  type QuizRecord,
+} from '../services/access';
+import { gradeQuiz } from '../services/grade';
 
 export default factories.createCoreController('api::quiz-attempt.quiz-attempt' as never, ({ strapi }) => ({
   async create(ctx) {
@@ -7,14 +15,21 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
     if (!user) return ctx.unauthorized();
 
     const input = ctx.request.body?.data ?? ctx.request.body ?? {};
-    const quiz = input.quizSlug
-      ? await strapi.db.query('api::quiz.quiz').findOne({ where: { slug: input.quizSlug } })
-      : null;
+    const quizSlug = typeof input.quizSlug === 'string' ? input.quizSlug : undefined;
+    if (!quizSlug) return ctx.badRequest('QUIZ_SLUG_REQUIRED');
+
+    const quiz: (QuizRecord & { questions: unknown }) | null = await strapi.db
+      .query('api::quiz.quiz')
+      .findOne({ where: { slug: quizSlug }, select: QUIZ_SELECT_FOR_GRADING });
+    if (!quiz) return ctx.badRequest('QUIZ_NOT_FOUND');
+
+    const grade = gradeQuiz(quiz.type, quiz.questions, input.answers);
+
     const duplicateFilters = buildAttemptDuplicateFilters(input, user);
     const existingEntry = duplicateFilters
       ? await strapi.db.query('api::quiz-attempt.quiz-attempt').findOne({
           where: duplicateFilters,
-          populate: ['quiz'],
+          populate: SAFE_QUIZ_POPULATE,
         })
       : null;
 
@@ -23,18 +38,21 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
       return;
     }
 
-    const entry = await strapi.db.query('api::quiz-attempt.quiz-attempt').create({
-      data: buildAttemptCreateData(input, user, quiz),
-      populate: ['quiz'],
-    }).catch(async (error: unknown) => {
-      if (!duplicateFilters) throw error;
-      const duplicateEntry = await strapi.db.query('api::quiz-attempt.quiz-attempt').findOne({
-        where: duplicateFilters,
-        populate: ['quiz'],
+    const entry = await strapi.db
+      .query('api::quiz-attempt.quiz-attempt')
+      .create({
+        data: buildAttemptCreateData(input, user, quiz, grade),
+        populate: SAFE_QUIZ_POPULATE,
+      })
+      .catch(async (error: unknown) => {
+        if (!duplicateFilters) throw error;
+        const duplicateEntry = await strapi.db.query('api::quiz-attempt.quiz-attempt').findOne({
+          where: duplicateFilters,
+          populate: SAFE_QUIZ_POPULATE,
+        });
+        if (!duplicateEntry) throw error;
+        return duplicateEntry;
       });
-      if (!duplicateEntry) throw error;
-      return duplicateEntry;
-    });
 
     ctx.body = { data: entry };
   },
@@ -47,7 +65,7 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
       where: buildAttemptFindFilters(user),
       orderBy: { completedAt: 'desc' },
       limit: 20,
-      populate: ['quiz'],
+      populate: SAFE_QUIZ_POPULATE,
     });
 
     ctx.body = { data: entries };
@@ -62,7 +80,7 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
         id: ctx.params.id,
         ...buildAttemptFindFilters(user),
       },
-      populate: ['quiz'],
+      populate: SAFE_QUIZ_POPULATE,
     });
 
     if (!entry) return ctx.notFound();

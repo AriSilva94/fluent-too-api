@@ -1,6 +1,3 @@
-/**
- * global service.
- */
 
 import { factories } from '@strapi/strapi';
 

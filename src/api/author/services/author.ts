@@ -1,6 +1,3 @@
-/**
- * author service.
- */
 
 import { factories } from '@strapi/strapi';
 
