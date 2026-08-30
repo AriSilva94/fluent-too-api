@@ -13,6 +13,14 @@
 // e resolve a corrida que a checagem em código sozinha não fecha.
 module.exports = {
   async up(knex) {
+    // Ver comentário equivalente em 20260829120000: migrations de usuário rodam antes
+    // do Strapi criar as tabelas novas no primeiro boot de uma feature.
+    const hasTable = await knex.schema.hasTable('quiz_attempts');
+    if (!hasTable) {
+      console.warn('[migration] quiz_attempts ainda não existe, pulando indice (sera criado no proximo deploy)');
+      return;
+    }
+
     const duplicates = await knex('quiz_attempts')
       .select('attempt_key')
       .whereNotNull('attempt_key')

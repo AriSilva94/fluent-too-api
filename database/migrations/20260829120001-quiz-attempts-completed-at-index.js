@@ -6,6 +6,14 @@
 // para o ORDER BY não varrer a tabela inteira. Puramente aditivo.
 module.exports = {
   async up(knex) {
+    // Ver comentário equivalente em 20260829120000: migrations de usuário rodam antes
+    // do Strapi criar as tabelas novas no primeiro boot de uma feature.
+    const hasTable = await knex.schema.hasTable('quiz_attempts');
+    if (!hasTable) {
+      console.warn('[migration] quiz_attempts ainda não existe, pulando indice (sera criado no proximo deploy)');
+      return;
+    }
+
     await knex.raw('CREATE INDEX IF NOT EXISTS quiz_attempts_completed_at_idx ON quiz_attempts (completed_at)');
   },
 
