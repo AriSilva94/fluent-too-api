@@ -56,8 +56,6 @@ function createStrapi({
 
         throw new Error(`UID inesperado: ${uid}`);
       },
-      // Simula `strapi.db.transaction`: só executa o callback, sem isolar nada — é o
-      // suficiente para exercitar o caminho de erro que o controller precisa tratar.
       async transaction(cb: (...args: any[]) => Promise<any>) {
         return cb({});
       },
@@ -108,7 +106,7 @@ describe('candidatura a professor — corrida de duplicidade', () => {
     const { strapi } = createStrapi({
       users: [unassignedUser],
       roles: [pendingRole],
-      applications: [], // o findOne de checagem não encontra nada: a outra chamada ainda não commitou
+      applications: [],
       onCreateApplication: async () => {
         throw duplicateKeyError();
       },

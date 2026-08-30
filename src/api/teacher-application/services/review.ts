@@ -31,8 +31,6 @@ export function buildReviewDecision(
 
 const UID = 'api::teacher-application.teacher-application';
 
-// Campos seguros do usuário: nunca incluir password/tokens privados, que a
-// query engine (strapi.db.query) NÃO sanitiza automaticamente como o content-API faz.
 export const SAFE_USER_SELECT = ['id', 'username', 'email', 'confirmed'];
 export const SAFE_POPULATE = {
   user: { select: SAFE_USER_SELECT },
@@ -49,11 +47,6 @@ export async function getReviewer(strapi: any, id: number | string | undefined) 
   return user && isAdminRole(user.role?.type) ? user : null;
 }
 
-/**
- * O caminho de revisão vive aqui, recebendo `strapi` por parâmetro, para poder ser
- * exercitado em teste com fakes — no controller ele dependia de `global.strapi` e só
- * dava para verificar com a aplicação de pé.
- */
 export async function reviewApplication(strapi: any, ctx: any, decision: 'approved' | 'rejected') {
   const reviewer = await getReviewer(strapi, ctx.state.user?.id);
   if (!reviewer) return ctx.forbidden();
@@ -79,15 +72,6 @@ export async function reviewApplication(strapi: any, ctx: any, decision: 'approv
     teacherRoleId = teacherRole.id;
   }
 
-  // Atualização condicional: só grava se a candidatura ainda estiver 'pending'
-  // no momento da escrita, fechando a janela de corrida entre duas revisões
-  // concorrentes que ambas passaram pela pré-checagem acima. A promoção de
-  // role só acontece depois de confirmar que esta chamada venceu a corrida.
-  //
-  // As duas escritas (candidatura + role) rodam na mesma transação: sem isso,
-  // uma falha entre elas deixava a candidatura aprovada com o usuário ainda
-  // sem a role `teacher`, e uma nova tentativa de revisão era barrada por
-  // ALREADY_REVIEWED sem jeito de reconciliar.
   const updated = await strapi.db.transaction(async () => {
     const reviewedApplication = await strapi.db.query(UID).update({
       where: { id: application.id, status: 'pending' },

@@ -18,8 +18,6 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
     const quizSlug = typeof input.quizSlug === 'string' ? input.quizSlug : undefined;
     if (!quizSlug) return ctx.badRequest('QUIZ_SLUG_REQUIRED');
 
-    // O quiz (perguntas, gabarito, título, nível...) vem do banco, nunca do cliente:
-    // é a única fonte usada para recalcular o resultado abaixo.
     const quiz: (QuizRecord & { questions: unknown }) | null = await strapi.db
       .query('api::quiz.quiz')
       .findOne({ where: { slug: quizSlug }, select: QUIZ_SELECT_FOR_GRADING });

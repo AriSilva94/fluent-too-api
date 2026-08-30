@@ -21,10 +21,6 @@ export type QuizRecord = {
   type: 'multiple-choice' | 'fill-gap' | 'flashcard';
 };
 
-// `strapi.db.query` (Query Engine) não aplica a sanitização do Content API: um
-// `populate: ['quiz']` puro devolveria também `quiz.owner`, que o schema marca
-// `private` só para as rotas de Content API. Selecionar os campos explicitamente
-// evita esse vazamento independente de o schema do quiz ganhar campos privados novos.
 export const SAFE_QUIZ_POPULATE = {
   quiz: {
     select: ['id', 'title', 'slug', 'targetLanguage', 'level', 'type'],
@@ -33,9 +29,6 @@ export const SAFE_QUIZ_POPULATE = {
 
 export const QUIZ_SELECT_FOR_GRADING = ['id', 'slug', 'title', 'targetLanguage', 'level', 'type', 'questions'];
 
-// Score, contagens e metadados do quiz vêm do registro do quiz e do `grade`
-// recalculado no backend — nunca do que o cliente mandou. Só `answers` (a
-// resposta em si) e `attemptKey` (dedupe opcional) atravessam sem reprocessar.
 export function buildAttemptCreateData(input: AttemptInput, user: UserLike, quiz: QuizRecord, grade: GradeResult) {
   return {
     attemptKey: resolveAttemptKey(input, quiz, grade),

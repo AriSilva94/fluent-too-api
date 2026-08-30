@@ -27,7 +27,6 @@ describe('limpeza do anexo temporário', () => {
     const filepath = await createTempFile();
     const cleanup = teacherAttachmentCleanup({} as any, { strapi } as any);
 
-    // `authenticate` responde 401 sem chamar o handler: o controller nunca roda.
     await cleanup(createContext('/api/profile/teacher', 'POST', filepath), async () => {});
 
     expect(existsSync(filepath)).toBe(false);

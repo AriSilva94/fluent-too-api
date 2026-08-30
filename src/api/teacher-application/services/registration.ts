@@ -11,18 +11,10 @@ export type TeacherApplicationResult =
   | { ok: true; data: TeacherApplicationInput }
   | { ok: false; error: 'REQUIRED' | 'INVALID_URL' | 'TOO_LONG' };
 
-// O controller grava via `strapi.db.query`, que não passa pela validação de schema
-// do Content API (nem o `maxLength` do content-type entra em vigor aqui). Sem este
-// limite, um payload arbitrariamente grande engordava o banco e as respostas do admin.
 const MAX_BIO_LENGTH = 2000;
 const MAX_EXPERIENCE_LENGTH = 2000;
 const MAX_CREDENTIAL_URL_LENGTH = 2048;
 
-/**
- * O link vira o `href` de um link vivo na fila de aprovação do admin: um
- * `javascript:` enviado por curl executaria na origem autenticada de quem revisa.
- * Só http/https passam — e uma string relativa nem chega a ser uma URL absoluta.
- */
 export function isHttpUrl(value: string): boolean {
   let parsed: URL;
   try {
@@ -38,8 +30,6 @@ export function validateTeacherApplication(input: unknown): TeacherApplicationRe
   const value = (input ?? {}) as Record<string, unknown>;
   const bio = String(value.bio ?? '').trim();
   const experience = String(value.experience ?? '').trim();
-  // Um multipart com um único campo `languages` chega como string, não como array:
-  // sem normalizar, escolher um idioma só era recusado com REQUIRED.
   const rawLanguages = Array.isArray(value.languages)
     ? value.languages
     : value.languages === undefined || value.languages === null

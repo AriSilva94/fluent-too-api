@@ -8,11 +8,6 @@ export type GradeResult = {
   details: Record<string, boolean>;
 };
 
-/**
- * Recalcula o resultado no backend a partir das perguntas do quiz e das respostas
- * enviadas pelo cliente. O cliente nunca é confiável para dizer o próprio score:
- * ele só manda o que respondeu, e este é o único lugar que decide se acertou.
- */
 export function gradeQuiz(type: QuizQuestionType, questions: unknown, answers: unknown): GradeResult {
   const list = Array.isArray(questions) ? questions : [];
   const answerMap = answers && typeof answers === 'object' ? (answers as Record<string, unknown>) : {};

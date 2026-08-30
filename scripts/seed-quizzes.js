@@ -1,14 +1,5 @@
 'use strict';
 
-// One-off seed script to recreate quiz content after local DB data loss.
-// Run with: node scripts/seed-quizzes.js
-// Pattern: slug = `{level}-{lang}-{topic}-{mc|gap|fc}`, one quiz per (level, targetLanguage)
-// per batch. Public batch mirrors the original recovered set; private batch is new,
-// gated by the isPublic field + api::quiz.quiz controller (requires login to read).
-// Level image comes from a real Strapi media upload (fluent-too/public/levels/*.svg),
-// one file per level (C1 and C2 share the same visual, same as the frontend's
-// LEVEL_VISUALS constant did before this field existed).
-
 const path = require('path');
 const { extraPublicQuizzes } = require('./seed-quizzes-extra');
 
@@ -24,7 +15,6 @@ const LEVEL_IMAGE_FILES = {
 };
 
 const publicQuizzes = [
-  // ---- Portuguese (pt) ----
   {
     title: 'Saudações Básicas',
     slug: 'a1-pt-saudacoes-basicas-mc',
@@ -117,7 +107,6 @@ const publicQuizzes = [
     ],
   },
 
-  // ---- English (en) ----
   {
     title: 'Basic Greetings',
     slug: 'a1-en-basic-greetings-mc',
@@ -210,7 +199,6 @@ const publicQuizzes = [
     ],
   },
 
-  // ---- French (fr) ----
   {
     title: 'Salutations de Base',
     slug: 'a1-fr-salutations-de-base-mc',
@@ -305,7 +293,6 @@ const publicQuizzes = [
 ];
 
 const privateQuizzes = [
-  // ---- Portuguese (pt) ----
   {
     title: 'Números e Cores',
     slug: 'a1-pt-numeros-e-cores-gap',
@@ -391,7 +378,6 @@ const privateQuizzes = [
     ],
   },
 
-  // ---- English (en) ----
   {
     title: 'Numbers and Colors',
     slug: 'a1-en-numbers-and-colors-gap',
@@ -477,7 +463,6 @@ const privateQuizzes = [
     ],
   },
 
-  // ---- French (fr) ----
   {
     title: 'Nombres et Couleurs',
     slug: 'a1-fr-nombres-et-couleurs-gap',

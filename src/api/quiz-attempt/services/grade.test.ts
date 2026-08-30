@@ -19,7 +19,6 @@ describe('gradeQuiz', () => {
 
   it('ignora um score forjado pelo cliente e recalcula do zero', () => {
     const questions = [{ id: 'q1', correctAnswer: 'certo' }];
-    // O cliente "afirma" 100, mas a resposta enviada está errada.
     const result = gradeQuiz('multiple-choice', questions, { q1: 'errado' });
     expect(result.score).toBe(0);
     expect(result.correctCount).toBe(0);

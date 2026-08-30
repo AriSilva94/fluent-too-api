@@ -1,10 +1,5 @@
 'use strict';
 
-// Extra public quizzes to reach 10 quizzes per (level, targetLanguage) in dev.
-// Combined with scripts/seed-quizzes.js: existing seed already has 2 per (level, lang)
-// (1 public + 1 private). This file adds 8 new public quizzes per (level, lang) = 144 total.
-// Same schema as seed-quizzes.js entries. Loaded and upserted by seed-quizzes.js.
-
 function mc(base, minutes, questions) {
   return {
     ...base,
@@ -48,7 +43,6 @@ function fc(base, minutes, pairs) {
 }
 
 const extraPublicQuizzes = [
-  // ================= A1 =================
   fc(
     { title: 'Família', slug: 'a1-pt-familia-fc', description: 'Aprenda os nomes dos membros da família.', targetLanguage: 'pt', level: 'A1' },
     3,
@@ -232,7 +226,6 @@ const extraPublicQuizzes = [
     ]
   ),
 
-  // ================= A2 =================
   fc(
     { title: 'Passatempos', slug: 'a2-pt-passatempos-fc', description: 'Vocabulário sobre hobbies e passatempos.', targetLanguage: 'pt', level: 'A2' },
     4,
@@ -416,7 +409,6 @@ const extraPublicQuizzes = [
     ]
   ),
 
-  // ================= B1 =================
   fc(
     { title: 'Vocabulário de Trabalho', slug: 'b1-pt-vocabulario-de-trabalho-fc', description: 'Vocabulário útil no ambiente de trabalho.', targetLanguage: 'pt', level: 'B1' },
     5,
@@ -600,7 +592,6 @@ const extraPublicQuizzes = [
     ]
   ),
 
-  // ================= B2 =================
   fc(
     { title: 'Vocabulário de Negócios', slug: 'b2-pt-vocabulario-de-negocios-fc', description: 'Vocabulário do mundo dos negócios.', targetLanguage: 'pt', level: 'B2' },
     6,
@@ -784,7 +775,6 @@ const extraPublicQuizzes = [
     ]
   ),
 
-  // ================= C1 =================
   fc(
     { title: 'Collocations Comuns', slug: 'c1-pt-collocations-comuns-fc', description: 'Combinações de palavras usadas naturalmente por falantes nativos.', targetLanguage: 'pt', level: 'C1' },
     7,
@@ -968,7 +958,6 @@ const extraPublicQuizzes = [
     ]
   ),
 
-  // ================= C2 =================
   fc(
     { title: 'Vocabulário Raro', slug: 'c2-pt-vocabulario-raro-fc', description: 'Vocabulário sofisticado e pouco comum.', targetLanguage: 'pt', level: 'C2' },
     7,

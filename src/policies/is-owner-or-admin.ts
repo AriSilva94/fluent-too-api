@@ -12,8 +12,6 @@ export default async (policyContext: any, _config: unknown, { strapi }: { strapi
 
   const uid = policyContext.state.route.info.apiName === 'quiz' ? 'api::quiz.quiz' : 'api::blog-post.blog-post';
 
-  // Com draftAndPublish o documento tem mais de uma linha; lê-las todas evita depender
-  // de qual linha um findOne sem ordenação devolveria.
   let entries = await strapi.db.query(uid).findMany({
     where: { documentId: policyContext.params.id },
     populate: ['owner'],

@@ -1,13 +1,7 @@
 'use strict';
 
-// Histórico de tentativas (dashboard do aluno, "app_admin" vendo tudo) ordena por
-// `completed_at` com LIMIT 20. O relacionamento com o usuário fica numa tabela de
-// link (`quiz_attempts_user_lnk`), que já tem índice em `user_id`; falta este aqui
-// para o ORDER BY não varrer a tabela inteira. Puramente aditivo.
 module.exports = {
   async up(knex) {
-    // Ver comentário equivalente em 20260829120000: migrations de usuário rodam antes
-    // do Strapi criar as tabelas novas no primeiro boot de uma feature.
     const hasTable = await knex.schema.hasTable('quiz_attempts');
     if (!hasTable) {
       console.warn('[migration] quiz_attempts ainda não existe, pulando indice (sera criado no proximo deploy)');

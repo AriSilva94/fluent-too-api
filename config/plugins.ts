@@ -16,8 +16,6 @@ const allowedMediaTypes = [
 ];
 
 const deniedExecutableTypes = [
-  // SVG pode carregar <script> e referências externas: nunca deve ser aceito em
-  // upload público, mesmo que uma futura mudança amplie `allowedMediaTypes`.
   'image/svg+xml',
   'application/vnd.microsoft.portable-executable',
   'application/x-msdownload',

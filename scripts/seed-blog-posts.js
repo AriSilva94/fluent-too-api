@@ -1,9 +1,5 @@
 'use strict';
 
-// One-off migration: move blog posts from fluent-too/lib/blogData.ts (static TS data)
-// into Strapi as api::blog-post.blog-post entries, with real uploaded cover images.
-// Run with: node scripts/seed-blog-posts.js
-
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -18,7 +14,6 @@ const COVER_IMAGES = {
 };
 
 const posts = [
-  // ---- en-us ----
   {
     slug: 'mastering-a-new-language',
     targetLanguage: 'en',
@@ -86,7 +81,6 @@ const posts = [
     content: "Listening is where many learners feel the gap between classroom knowledge and real communication. You may know the grammar, recognize the words on paper, and still miss most of what native speakers say at natural speed.\n\nThe solution is not to consume harder content. It is to choose material with a manageable challenge. Short podcast clips, interview segments, and scene-based series work well because they give you context, recurring voices, and natural repetition.\n\nA useful routine has three passes. First, listen for the general message without pausing. Second, replay with subtitles or a transcript and mark what blocked your understanding. Third, listen again without support to confirm that the missing pieces now make sense.\n\nSeries are especially effective because characters repeat the same vocabulary, speech patterns, and emotional reactions. Podcasts are ideal for building tolerance for longer stretches of áudio without visual help. Both can be powerful when used deliberately.\n\nReal listening improves when you stop measuring success as perfect comprehension. If you can follow the topic, identify key expressions, and notice progress week after week, your listening training is working.",
   },
 
-  // ---- pt-br ----
   {
     slug: 'mastering-a-new-language',
     targetLanguage: 'pt',
@@ -154,7 +148,6 @@ const posts = [
     content: "A escuta é o ponto em que muitos alunos sentem a distancia entre conhecimento de sala de aula e comunicação real. Você pode conhecer a gramática, reconhecer palavras no papel e ainda assim entender pouco quando um nativo fala em velocidade normal.\n\nA solução não é consumir conteúdo cada vez mais difícil. O melhor caminho e escolher materiais com desafio administravel. Trechos curtos de podcast, entrevistas e séries com cenas objetivas funcionam bem porque oferecem contexto, vozes recorrentes e repeticao natural.\n\nUma rotina útil tem três passagens. Primeiro, escute para captar a ideia geral, sem pausar. Depois, repita com legenda ou transcricao e marque o que bloqueou sua compreensão. Por fim, ouça novamente sem apoio para confirmar se os pontos antes difíceis agora fazem sentido.\n\nSéries são especialmente boas porque os personagens repetem vocabulário, ritmo e reações emocionais. Podcasts treinam resistência para acompanhar áudio por mais tempo sem apoio visual. Ambos podem acelerar muito a escuta quando usados com critério.\n\nA compreensão real melhora quando você para de medir sucesso como entendimento perfeito. Se consegue seguir o tema, identificar expressões importantes e notar progresso semanal, seu treino de escuta está funcionando.",
   },
 
-  // ---- fr-fr ----
   {
     slug: 'mastering-a-new-language',
     targetLanguage: 'fr',
@@ -258,7 +251,6 @@ async function uploadCoverImages(strapi) {
     try {
       fs.unlinkSync(filePath);
     } catch {
-      // upload service may already have consumed/removed the temp file
     }
   }
 

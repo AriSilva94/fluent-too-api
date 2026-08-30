@@ -26,7 +26,6 @@ describe('quiz attempt access', () => {
       buildAttemptCreateData(
         {
           answers: { q1: 'Bom dia' },
-          // Um cliente malicioso poderia mandar isso, mas buildAttemptCreateData nunca lê daqui.
           ...({ score: 100, quizTitle: 'Forjado' } as never),
         },
         { id: 10 },

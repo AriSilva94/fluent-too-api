@@ -2,29 +2,16 @@ import type { Core } from '@strapi/strapi';
 
 const TEACHER_REGISTER_PATH = '/api/profile/teacher';
 
-// 5 MB de anexo (o mesmo limite de `validateAttachmentFile`) + folga para os
-// demais campos de texto do multipart e para os cabeçalhos de cada parte.
 export const MAX_TEACHER_REGISTER_BODY_BYTES = 5 * 1024 * 1024 + 256 * 1024;
 
 export type ContentLengthCheck =
   | { ok: true }
   | { ok: false; error: 'FILE_TOO_LARGE' | 'LENGTH_REQUIRED' };
 
-/**
- * O roteador do Koa não roda em modo estrito: `/api/profile/teacher/` cai no mesmo
- * handler que `/api/profile/teacher`. Comparar `ctx.path` cru deixava a barra final
- * pular esta guarda e o formidable voltar ao teto padrão de 200 MB.
- */
 export function normalizePath(path: string): string {
   return path.length > 1 ? path.replace(/\/+$/, '') : path;
 }
 
-/**
- * O middleware `strapi::body` grava o arquivo em disco antes de qualquer validação
- * de aplicação (o teto real seria o padrão de 200 MB do formidable). Como o corpo é
- * consumido pelo parser global, que roda ANTES do roteador, a recusa precisa
- * acontecer aqui — antes dos bytes serem escritos.
- */
 export function checkContentLength(header: string | undefined, maxBytes: number): ContentLengthCheck {
   if (header === undefined) return { ok: false, error: 'LENGTH_REQUIRED' };
 
