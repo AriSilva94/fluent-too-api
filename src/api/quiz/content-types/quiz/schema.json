@@ -57,6 +57,12 @@
       "type": "boolean",
       "required": true,
       "default": true
+    },
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "private": true
     }
   }
 }

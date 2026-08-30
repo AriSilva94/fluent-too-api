@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "teacher_applications",
+  "info": {
+    "singularName": "teacher-application",
+    "pluralName": "teacher-applications",
+    "displayName": "Teacher Application",
+    "description": "Candidatura de professor aguardando aprovação manual"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["pending", "approved", "rejected"],
+      "required": true,
+      "default": "pending"
+    },
+    "languages": {
+      "type": "json"
+    },
+    "bio": {
+      "type": "text",
+      "required": true,
+      "maxLength": 2000
+    },
+    "experience": {
+      "type": "text",
+      "required": true,
+      "maxLength": 2000
+    },
+    "credentialUrl": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "attachment": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images", "files"]
+    },
+    "reviewedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "reviewedAt": {
+      "type": "datetime"
+    },
+    "reviewNote": {
+      "type": "text"
+    }
+  }
+}
