@@ -1,7 +1,11 @@
 import type { Core } from '@strapi/strapi';
 
 const allowedMediaTypes = [
-  'image/*',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/avif',
   'video/*',
   'audio/*',
   'application/pdf',
@@ -12,6 +16,9 @@ const allowedMediaTypes = [
 ];
 
 const deniedExecutableTypes = [
+  // SVG pode carregar <script> e referências externas: nunca deve ser aceito em
+  // upload público, mesmo que uma futura mudança amplie `allowedMediaTypes`.
+  'image/svg+xml',
   'application/vnd.microsoft.portable-executable',
   'application/x-msdownload',
   'application/x-msdos-program',
@@ -24,6 +31,7 @@ const deniedExecutableTypes = [
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => {
   const useS3Upload = Boolean(env('S3_BUCKET') && env('S3_ACCESS_KEY_ID') && env('S3_ACCESS_SECRET'));
+  const s3Acl = env('S3_ACL', undefined);
 
   return {
     'users-permissions': {
@@ -101,8 +109,8 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
                   },
                   params: {
                     Bucket: env('S3_BUCKET'),
-                    ACL: env('S3_ACL', undefined),
                     signedUrlExpires: env.int('S3_SIGNED_URL_EXPIRES', 900),
+                    ...(s3Acl ? { ACL: s3Acl } : {}),
                   },
                 },
               },
