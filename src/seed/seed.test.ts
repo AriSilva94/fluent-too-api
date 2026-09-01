@@ -39,19 +39,23 @@ describe('dados do seed', () => {
 });
 
 describe('dados dos quizzes', () => {
-  it('traz os 180 quizzes, 60 por idioma', () => {
-    expect(QUIZZES).toHaveLength(180);
+  it('traz os 18 quizzes originais, 6 por idioma', () => {
+    expect(QUIZZES).toHaveLength(18);
 
     const porIdioma = QUIZZES.reduce<Record<string, number>>((mapa, quiz) => {
       mapa[quiz.targetLanguage] = (mapa[quiz.targetLanguage] ?? 0) + 1;
       return mapa;
     }, {});
 
-    expect(porIdioma).toEqual({ pt: 60, en: 60, fr: 60 });
+    expect(porIdioma).toEqual({ pt: 6, en: 6, fr: 6 });
   });
 
-  it('marca explicitamente quais sao publicos', () => {
-    expect(QUIZZES.filter((quiz) => quiz.isPublic)).toHaveLength(162);
-    expect(QUIZZES.filter((quiz) => !quiz.isPublic)).toHaveLength(18);
+  it('cobre os seis niveis e os tres tipos', () => {
+    expect([...new Set(QUIZZES.map((quiz) => quiz.level))].sort()).toEqual(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+    expect([...new Set(QUIZZES.map((quiz) => quiz.type))].sort()).toEqual(['fill-gap', 'flashcard', 'multiple-choice']);
+  });
+
+  it('nao tem slug repetido, que o schema rejeitaria', () => {
+    expect(new Set(QUIZZES.map((quiz) => quiz.slug)).size).toBe(QUIZZES.length);
   });
 });
