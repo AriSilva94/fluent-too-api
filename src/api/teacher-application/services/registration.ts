@@ -1,4 +1,6 @@
-const supportedLanguages = ['pt', 'en', 'fr'];
+import { SUPPORTED_LANGUAGES } from '../../../auth/quiz-language';
+
+const supportedLanguages: readonly string[] = SUPPORTED_LANGUAGES;
 
 export type TeacherApplicationInput = {
   bio: string;

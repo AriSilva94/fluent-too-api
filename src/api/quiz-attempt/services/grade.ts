@@ -1,4 +1,10 @@
-export type QuizQuestionType = 'multiple-choice' | 'fill-gap' | 'flashcard';
+export const QUIZ_TYPE = {
+  multipleChoice: 'multiple-choice',
+  fillGap: 'fill-gap',
+  flashcard: 'flashcard',
+} as const;
+
+export type QuizQuestionType = (typeof QUIZ_TYPE)[keyof typeof QUIZ_TYPE];
 
 export type GradeResult = {
   score: number;
@@ -35,15 +41,15 @@ export function gradeQuiz(type: QuizQuestionType, questions: unknown, answers: u
 function gradeQuestion(type: QuizQuestionType, question: unknown, answer: unknown): boolean {
   const q = (question ?? {}) as Record<string, unknown>;
 
-  if (type === 'multiple-choice') {
+  if (type === QUIZ_TYPE.multipleChoice) {
     return typeof answer === 'string' && answer === q.correctAnswer;
   }
 
-  if (type === 'flashcard') {
+  if (type === QUIZ_TYPE.flashcard) {
     return answer === true;
   }
 
-  if (type === 'fill-gap') {
+  if (type === QUIZ_TYPE.fillGap) {
     const expected = Array.isArray(q.correctAnswers) ? (q.correctAnswers as unknown[]) : [];
     const given = Array.isArray(answer) ? answer : [];
     if (given.length !== expected.length || expected.length === 0) return false;

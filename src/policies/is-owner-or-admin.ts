@@ -1,5 +1,12 @@
 import { canMutateDocument } from '../auth/ownership';
 
+const OWNED_CONTENT_UIDS = {
+  quiz: 'api::quiz.quiz',
+  'blog-post': 'api::blog-post.blog-post',
+} as const;
+
+type OwnedContentApi = keyof typeof OWNED_CONTENT_UIDS;
+
 export default async (policyContext: any, _config: unknown, { strapi }: { strapi: any }) => {
   const userId = policyContext.state.user?.id;
   if (!userId) return false;
@@ -10,7 +17,8 @@ export default async (policyContext: any, _config: unknown, { strapi }: { strapi
   });
   if (!user) return false;
 
-  const uid = policyContext.state.route.info.apiName === 'quiz' ? 'api::quiz.quiz' : 'api::blog-post.blog-post';
+  const uid = OWNED_CONTENT_UIDS[policyContext.state.route.info.apiName as OwnedContentApi];
+  if (!uid) return false;
 
   let entries = await strapi.db.query(uid).findMany({
     where: { documentId: policyContext.params.id },

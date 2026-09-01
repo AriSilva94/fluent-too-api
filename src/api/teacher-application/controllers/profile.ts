@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { canBecomeStudent, canBecomeTeacher } from '../../../auth/profile-transitions';
+import { APP_ROLES } from '../../../auth/roles';
+import { APPLICATION_STATUS } from '../services/review';
 import { validateAttachmentFile, validateTeacherApplication } from '../services/registration';
 
 const USER_UID = 'plugin::users-permissions.user';
@@ -35,7 +37,7 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
     if (!fileValidation.ok) return ctx.badRequest(fileValidation.error);
   }
 
-  const pendingRole = await strapi.db.query(ROLE_UID).findOne({ where: { type: 'teacher_pending' } });
+  const pendingRole = await strapi.db.query(ROLE_UID).findOne({ where: { type: APP_ROLES.teacherPending } });
   if (!pendingRole) return ctx.badRequest('ROLE_UNAVAILABLE');
 
   let uploadedFile: any;
@@ -57,7 +59,7 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
       await strapi.db.query(APPLICATION_UID).create({
         data: {
           user: user.id,
-          status: 'pending',
+          status: APPLICATION_STATUS.pending,
           bio,
           experience,
           languages,
@@ -83,7 +85,7 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
     throw error;
   }
 
-  ctx.body = { data: { role: 'teacher_pending' } };
+  ctx.body = { data: { role: APP_ROLES.teacherPending } };
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -92,19 +94,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     if (!user) return ctx.unauthorized();
 
     let applicationStatus: 'pending' | 'approved' | 'rejected' | undefined;
-    if (user.role?.type === 'teacher_pending') {
+    if (user.role?.type === APP_ROLES.teacherPending) {
       const application = await strapi.db.query(APPLICATION_UID).findOne({ where: { user: user.id } });
       applicationStatus = application?.status;
     }
 
     if (!canBecomeStudent(user.role?.type, applicationStatus)) return ctx.forbidden('PROFILE_ALREADY_SET');
 
-    const studentRole = await strapi.db.query(ROLE_UID).findOne({ where: { type: 'student' } });
+    const studentRole = await strapi.db.query(ROLE_UID).findOne({ where: { type: APP_ROLES.student } });
     if (!studentRole) return ctx.badRequest('ROLE_UNAVAILABLE');
 
     await strapi.db.query(USER_UID).update({ where: { id: user.id }, data: { role: studentRole.id } });
 
-    ctx.body = { data: { role: 'student' } };
+    ctx.body = { data: { role: APP_ROLES.student } };
   },
 
   async becomeTeacher(ctx: any) {

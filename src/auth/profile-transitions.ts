@@ -1,10 +1,13 @@
-export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
+import { APPLICATION_STATUS, type ApplicationStatus } from '../api/teacher-application/services/review';
+import { APP_ROLES } from './roles';
+
+export type { ApplicationStatus };
 
 export function canBecomeStudent(roleType?: string | null, applicationStatus?: ApplicationStatus) {
-  if (roleType === 'unassigned') return true;
-  return roleType === 'teacher_pending' && applicationStatus === 'rejected';
+  if (roleType === APP_ROLES.unassigned) return true;
+  return roleType === APP_ROLES.teacherPending && applicationStatus === APPLICATION_STATUS.rejected;
 }
 
 export function canBecomeTeacher(roleType?: string | null) {
-  return roleType === 'unassigned';
+  return roleType === APP_ROLES.unassigned;
 }

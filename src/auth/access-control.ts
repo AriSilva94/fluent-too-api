@@ -1,5 +1,6 @@
 import type { Core } from '@strapi/strapi';
 import { migrateAuthenticatedUsersToStudent } from './role-migration';
+import { backfillTeachingLanguages } from './teaching-languages-backfill';
 import { isAdminRole } from './roles';
 
 type AppRoleType = 'super_admin' | 'app_admin' | 'teacher' | 'teacher_pending' | 'student' | 'unassigned';
@@ -36,9 +37,12 @@ const readActions = [
   'api::blog-post.blog-post.findOne',
 ];
 
+const quizOwnListAction = 'api::quiz.quiz.findMine';
+
 const quizManagementActions = [
   'api::quiz.quiz.find',
   'api::quiz.quiz.findOne',
+  quizOwnListAction,
   'api::quiz.quiz.create',
   'api::quiz.quiz.update',
   'api::quiz.quiz.delete',
@@ -71,6 +75,7 @@ const blogManagementActions = [
 ];
 
 const contentCreationActions = [
+  quizOwnListAction,
   'api::quiz.quiz.create',
   'api::quiz.quiz.update',
   'api::quiz.quiz.delete',
@@ -99,16 +104,28 @@ const becomeStudentAction = 'api::teacher-application.profile.becomeStudent';
 const becomeTeacherAction = 'api::teacher-application.profile.becomeTeacher';
 const myApplicationAction = 'api::teacher-application.profile.myApplication';
 
-const studentActions = [...authenticatedUserActions, ...studentHistoryActions, myApplicationAction];
+const quizReadActions = ['api::quiz.quiz.find', 'api::quiz.quiz.findOne'];
+
+const studentActions = [
+  ...authenticatedUserActions,
+  ...quizReadActions,
+  ...studentHistoryActions,
+  myApplicationAction,
+];
+
+const quizModerationActions = ['api::quiz.quiz.publish', 'api::quiz.quiz.unpublish'];
+
+const systemActions = ['plugin::users-permissions.user.destroy'];
 
 export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
-  const adminActions = [
+  const contentAdminActions = [
     ...authenticatedUserActions,
     ...readActions,
     ...quizManagementActions.filter((action) => !readActions.includes(action)),
     ...quizAttemptManagementActions.filter((action) => !readActions.includes(action)),
     ...blogManagementActions,
     ...teacherApplicationReviewActions,
+    ...quizModerationActions,
   ];
 
   return {
@@ -122,8 +139,8 @@ export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
       { name: 'Unassigned', type: 'unassigned', description: 'Signed up but has not chosen a profile yet' },
     ],
     permissions: {
-      super_admin: adminActions,
-      app_admin: adminActions,
+      super_admin: [...contentAdminActions, ...systemActions],
+      app_admin: contentAdminActions,
       teacher: [...studentActions, ...contentCreationActions],
       teacher_pending: [...studentActions, becomeStudentAction],
       student: [...studentActions],
@@ -166,6 +183,7 @@ export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail?: s
   }
 
   await migrateAuthenticatedUsersToStudent(strapi);
+  await backfillTeachingLanguages(strapi);
 }
 
 async function ensureRole(strapi: Core.Strapi, roleDefinition: AppRoleDefinition) {

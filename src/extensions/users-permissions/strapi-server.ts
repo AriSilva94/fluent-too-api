@@ -1,3 +1,5 @@
+import { normalizeTeachingLanguages } from '../../auth/quiz-language';
+
 export default (plugin: any) => {
   const originalUserFactory = plugin.controllers.user;
 
@@ -24,6 +26,7 @@ export default (plugin: any) => {
           confirmed: user.confirmed,
           blocked: user.blocked,
           role: user.role ? { id: user.role.id, name: user.role.name, type: user.role.type } : null,
+          teachingLanguages: normalizeTeachingLanguages(user.teachingLanguages),
         };
       },
     };

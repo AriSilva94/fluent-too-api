@@ -29,6 +29,7 @@ describe('access control', () => {
     const extra = plan.permissions.teacher.filter((action) => !plan.permissions.student.includes(action));
 
     expect(extra).toEqual([
+      'api::quiz.quiz.findMine',
       'api::quiz.quiz.create',
       'api::quiz.quiz.update',
       'api::quiz.quiz.delete',
@@ -84,6 +85,7 @@ describe('access control', () => {
       'api::quiz-attempt.quiz-attempt.findOne',
       'api::blog-post.blog-post.find',
       'api::blog-post.blog-post.findOne',
+      'api::quiz.quiz.findMine',
       'api::quiz.quiz.create',
       'api::quiz.quiz.update',
       'api::quiz.quiz.delete',
@@ -97,7 +99,33 @@ describe('access control', () => {
       'api::teacher-application.teacher-application.findOne',
       'api::teacher-application.teacher-application.approve',
       'api::teacher-application.teacher-application.reject',
+      'api::quiz.quiz.publish',
+      'api::quiz.quiz.unpublish',
     ]);
+  });
+
+  it('dá ao super admin tudo que o admin tem mais as ações de sistema', () => {
+    const plan = buildAccessControlPlan('admin@example.com');
+    const extra = plan.permissions.super_admin.filter((action) => !plan.permissions.app_admin.includes(action));
+
+    expect(extra).toEqual(['plugin::users-permissions.user.destroy']);
+  });
+
+  it('não deixa o dono do projeto apagar usuários', () => {
+    const plan = buildAccessControlPlan('admin@example.com');
+
+    expect(plan.permissions.app_admin).not.toContain('plugin::users-permissions.user.destroy');
+  });
+
+  it('deixa só admins publicarem e despublicarem quiz', () => {
+    const plan = buildAccessControlPlan('admin@example.com');
+
+    for (const action of ['api::quiz.quiz.publish', 'api::quiz.quiz.unpublish']) {
+      expect(plan.permissions.app_admin).toContain(action);
+      expect(plan.permissions.super_admin).toContain(action);
+      expect(plan.permissions.teacher).not.toContain(action);
+      expect(plan.permissions.student).not.toContain(action);
+    }
   });
 
 
@@ -144,6 +172,8 @@ describe('access control', () => {
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',
+      'api::quiz.quiz.find',
+      'api::quiz.quiz.findOne',
       'api::quiz-attempt.quiz-attempt.find',
       'api::quiz-attempt.quiz-attempt.findOne',
       'api::quiz-attempt.quiz-attempt.create',
@@ -162,6 +192,23 @@ describe('access control', () => {
       'api::teacher-application.profile.becomeTeacher',
       'api::teacher-application.profile.myApplication',
     ]);
+  });
+
+  it('deixa o estudante ler quizzes com o próprio token, inclusive os não públicos', () => {
+    const plan = buildAccessControlPlan('admin@example.com');
+
+    expect(plan.permissions.student).toContain('api::quiz.quiz.find');
+    expect(plan.permissions.student).toContain('api::quiz.quiz.findOne');
+    expect(plan.permissions.teacher).toContain('api::quiz.quiz.find');
+    expect(plan.permissions.teacher_pending).toContain('api::quiz.quiz.find');
+  });
+
+  it('não deixa o estudante criar, alterar nem apagar quiz', () => {
+    const plan = buildAccessControlPlan('admin@example.com');
+
+    expect(plan.permissions.student).not.toContain('api::quiz.quiz.create');
+    expect(plan.permissions.student).not.toContain('api::quiz.quiz.update');
+    expect(plan.permissions.student).not.toContain('api::quiz.quiz.delete');
   });
 
   it('não deixa o usuário sem perfil tocar em quiz nem em revisão de candidatura', () => {
