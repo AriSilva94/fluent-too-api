@@ -1,5 +1,6 @@
 import type { Core } from '@strapi/strapi';
 import { ensureAppAccessControl } from './auth/access-control';
+import { dropObsoleteIndexes, ensureAppIndexes } from './database/indexes';
 import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './auth/config';
 import { patchUploadServiceForWebp } from './upload/webp';
 import { seedBlogWhenEmpty } from './seed/blog';
@@ -36,6 +37,8 @@ export default {
       grant.google ?? {}
     );
 
+    await dropObsoleteIndexes(strapi);
+    await ensureAppIndexes(strapi);
     await ensureAppAccessControl(strapi);
     await seedBlogWhenEmpty(strapi).catch((error) => strapi.log.error('Seed de blog falhou', error));
     await seedQuizzesWhenEmpty(strapi).catch((error) => strapi.log.error('Seed de quizzes falhou', error));
