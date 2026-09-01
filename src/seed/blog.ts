@@ -1,62 +1,22 @@
-import os from 'node:os';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 import type { Core } from '@strapi/strapi';
-import { BLOG_OWNER_EMAIL, BLOG_POSTS, COVER_IMAGES } from './blog-posts';
+import { BLOG_POSTS, COVER_IMAGES } from './blog-posts';
+import { findContentOwner, shouldSeed, uploadRemoteImage } from './content';
 
 const UID = 'api::blog-post.blog-post';
 
-export function shouldSeedBlog(existingCount: number): boolean {
-  return existingCount === 0;
-}
-
-async function findOwner(strapi: Core.Strapi) {
-  return strapi.db.query('plugin::users-permissions.user').findOne({ where: { email: BLOG_OWNER_EMAIL } });
-}
-
-async function uploadCover(strapi: Core.Strapi, slug: string): Promise<number | null> {
-  const origem = COVER_IMAGES[slug];
-  if (!origem) return null;
-
-  const resposta = await fetch(origem);
-  if (!resposta.ok) return null;
-
-  const nomeArquivo = `blog-cover-${slug}.jpg`;
-  const caminho = path.join(os.tmpdir(), `${Date.now()}-${nomeArquivo}`);
-  const buffer = Buffer.from(await resposta.arrayBuffer());
-  await fs.writeFile(caminho, buffer);
-
-  try {
-    const enviado = await strapi.plugin('upload').service('upload').upload({
-      data: { fileInfo: { alternativeText: `Cover image for ${slug}`, caption: slug, name: nomeArquivo } },
-      files: {
-        filepath: caminho,
-        originalFilename: nomeArquivo,
-        mimetype: resposta.headers.get('content-type') ?? 'image/jpeg',
-        size: buffer.length,
-      },
-    });
-
-    const arquivo = Array.isArray(enviado) ? enviado[0] : enviado;
-    return arquivo?.id ?? null;
-  } finally {
-    await fs.unlink(caminho).catch(() => undefined);
-  }
-}
-
 export async function seedBlogWhenEmpty(strapi: Core.Strapi) {
   const total = await strapi.db.query(UID).count();
-  if (!shouldSeedBlog(total)) return;
+  if (!shouldSeed(total)) return;
 
-  const owner = await findOwner(strapi);
+  const owner = await findContentOwner(strapi);
   if (!owner) {
-    strapi.log.warn(`Seed de blog ignorado: usuario ${BLOG_OWNER_EMAIL} nao existe neste ambiente.`);
+    strapi.log.warn('Seed de blog ignorado: usuario dono do conteudo nao existe neste ambiente.');
     return;
   }
 
   const capaPorSlug: Record<string, number | null> = {};
   for (const slug of Object.keys(COVER_IMAGES)) {
-    capaPorSlug[slug] = await uploadCover(strapi, slug).catch(() => null);
+    capaPorSlug[slug] = await uploadRemoteImage(strapi, COVER_IMAGES[slug], `blog-cover-${slug}.jpg`, `Capa de ${slug}`).catch(() => null);
   }
 
   let criados = 0;

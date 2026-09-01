@@ -606,6 +606,8 @@ async function upsertQuiz(strapi, quiz, isPublic, imageId) {
   return 'created';
 }
 
+module.exports = { publicQuizzes, privateQuizzes, LEVEL_IMAGE_FILES };
+
 async function main() {
   const { createStrapi, compileStrapi } = require('@strapi/strapi');
 
@@ -633,7 +635,9 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
