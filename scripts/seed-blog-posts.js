@@ -241,6 +241,8 @@ async function uploadCoverImages(strapi) {
   return map;
 }
 
+module.exports = { posts, COVER_IMAGES, BLOG_OWNER_EMAIL };
+
 async function findBlogOwner(strapi) {
   const owner = await strapi.query('plugin::users-permissions.user').findOne({
     where: { email: BLOG_OWNER_EMAIL },
@@ -317,7 +319,9 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
