@@ -18,7 +18,7 @@
       "target": "plugin::users-permissions.user",
       "required": true
     },
-    "status": {
+    "reviewStatus": {
       "type": "enumeration",
       "enum": ["pending", "approved", "rejected"],
       "required": true,

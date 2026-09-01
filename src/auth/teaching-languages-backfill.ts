@@ -26,7 +26,7 @@ export async function backfillTeachingLanguages(strapi: Core.Strapi) {
   let updated = 0;
   for (const id of ids) {
     const application = await strapi.db.query(APPLICATION_UID).findOne({
-      where: { user: id, status: 'approved' },
+      where: { user: id, reviewStatus: 'approved' },
     });
     const languages = normalizeTeachingLanguages(application?.languages);
     if (languages.length === 0) continue;

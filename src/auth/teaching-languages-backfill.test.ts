@@ -29,7 +29,7 @@ function createStrapi({ teachers, applications }: { teachers: Row[]; application
             async findOne({ where }: any) {
               return (
                 applications.find(
-                  (application) => application.user === where.user && application.status === where.status
+                  (application) => application.user === where.user && application.reviewStatus === where.reviewStatus
                 ) ?? null
               );
             },
@@ -61,7 +61,7 @@ describe('backfillTeachingLanguages', () => {
   it('preenche a partir da candidatura aprovada', async () => {
     const { strapi, updates } = createStrapi({
       teachers: [{ id: 2, teachingLanguages: [] }],
-      applications: [{ user: 2, status: 'approved', languages: ['en', 'fr'] }],
+      applications: [{ user: 2, reviewStatus: 'approved', languages: ['en', 'fr'] }],
     });
 
     expect(await backfillTeachingLanguages(strapi)).toBe(1);
@@ -71,7 +71,7 @@ describe('backfillTeachingLanguages', () => {
   it('não mexe em quem já tem idioma', async () => {
     const { strapi, updates } = createStrapi({
       teachers: [{ id: 2, teachingLanguages: ['en'] }],
-      applications: [{ user: 2, status: 'approved', languages: ['fr'] }],
+      applications: [{ user: 2, reviewStatus: 'approved', languages: ['fr'] }],
     });
 
     expect(await backfillTeachingLanguages(strapi)).toBe(0);
@@ -81,7 +81,7 @@ describe('backfillTeachingLanguages', () => {
   it('ignora professor sem candidatura aprovada', async () => {
     const { strapi, updates } = createStrapi({
       teachers: [{ id: 2, teachingLanguages: [] }],
-      applications: [{ user: 2, status: 'pending', languages: ['fr'] }],
+      applications: [{ user: 2, reviewStatus: 'pending', languages: ['fr'] }],
     });
 
     expect(await backfillTeachingLanguages(strapi)).toBe(0);
@@ -91,7 +91,7 @@ describe('backfillTeachingLanguages', () => {
   it('ignora candidatura cujos idiomas não são suportados', async () => {
     const { strapi, updates } = createStrapi({
       teachers: [{ id: 2, teachingLanguages: [] }],
-      applications: [{ user: 2, status: 'approved', languages: ['de'] }],
+      applications: [{ user: 2, reviewStatus: 'approved', languages: ['de'] }],
     });
 
     expect(await backfillTeachingLanguages(strapi)).toBe(0);

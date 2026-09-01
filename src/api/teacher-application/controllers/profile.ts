@@ -59,7 +59,7 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
       await strapi.db.query(APPLICATION_UID).create({
         data: {
           user: user.id,
-          status: APPLICATION_STATUS.pending,
+          reviewStatus: APPLICATION_STATUS.pending,
           bio,
           experience,
           languages,
@@ -96,7 +96,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     let applicationStatus: 'pending' | 'approved' | 'rejected' | undefined;
     if (user.role?.type === APP_ROLES.teacherPending) {
       const application = await strapi.db.query(APPLICATION_UID).findOne({ where: { user: user.id } });
-      applicationStatus = application?.status;
+      applicationStatus = application?.reviewStatus;
     }
 
     if (!canBecomeStudent(user.role?.type, applicationStatus)) return ctx.forbidden('PROFILE_ALREADY_SET');
@@ -130,7 +130,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.body = {
       data: application
         ? {
-            status: application.status,
+            status: application.reviewStatus,
             reviewNote: application.reviewNote ?? null,
             createdAt: application.createdAt,
           }

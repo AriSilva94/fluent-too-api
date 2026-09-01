@@ -43,7 +43,7 @@ function createStrapi({ users, applications }: { users: Row[]; applications: Row
             },
             async update({ where, data }: any) {
               const application = applications.find(
-                (candidate) => candidate.id === where.id && candidate.status === where.status
+                (candidate) => candidate.id === where.id && candidate.reviewStatus === where.reviewStatus
               );
               if (!application) return null;
               Object.assign(application, data);
@@ -82,7 +82,7 @@ describe('caminho de revisão da candidatura', () => {
   it('recusa quem não é admin', async () => {
     const { strapi, updatedUsers } = createStrapi({
       users: [admin, candidate],
-      applications: [{ id: 10, status: 'pending', user: { id: 2 } }],
+      applications: [{ id: 10, reviewStatus: 'pending', user: { id: 2 } }],
     });
     const { ctx, calls } = createContext(2, 10);
 
@@ -95,7 +95,7 @@ describe('caminho de revisão da candidatura', () => {
   it('aprova promovendo o candidato para teacher com os idiomas da candidatura', async () => {
     const { strapi, updatedUsers } = createStrapi({
       users: [admin, candidate],
-      applications: [{ id: 10, status: 'pending', user: { id: 2 }, languages: ['en', 'fr'] }],
+      applications: [{ id: 10, reviewStatus: 'pending', user: { id: 2 }, languages: ['en', 'fr'] }],
     });
     const { ctx, calls } = createContext(1, 10);
 
@@ -110,7 +110,7 @@ describe('caminho de revisão da candidatura', () => {
   it('descarta idioma não suportado gravado na candidatura', async () => {
     const { strapi, updatedUsers } = createStrapi({
       users: [admin, candidate],
-      applications: [{ id: 10, status: 'pending', user: { id: 2 }, languages: ['en', 'de'] }],
+      applications: [{ id: 10, reviewStatus: 'pending', user: { id: 2 }, languages: ['en', 'de'] }],
     });
     const { ctx } = createContext(1, 10);
 
@@ -122,7 +122,7 @@ describe('caminho de revisão da candidatura', () => {
   it('promove com lista vazia quando a candidatura não tem idiomas', async () => {
     const { strapi, updatedUsers } = createStrapi({
       users: [admin, candidate],
-      applications: [{ id: 10, status: 'pending', user: { id: 2 } }],
+      applications: [{ id: 10, reviewStatus: 'pending', user: { id: 2 } }],
     });
     const { ctx } = createContext(1, 10);
 
@@ -132,7 +132,7 @@ describe('caminho de revisão da candidatura', () => {
   });
 
   it('devolve conflito na segunda aprovação', async () => {
-    const applications = [{ id: 10, status: 'pending', user: { id: 2 } }];
+    const applications = [{ id: 10, reviewStatus: 'pending', user: { id: 2 } }];
     const { strapi, updatedUsers } = createStrapi({ users: [admin, candidate], applications });
 
     const first = createContext(1, 10);

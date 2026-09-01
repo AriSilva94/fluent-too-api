@@ -1,5 +1,5 @@
 import { factories } from '@strapi/strapi';
-import { getReviewer, reviewApplication, SAFE_POPULATE } from '../services/review';
+import { getReviewer, reviewApplication, SAFE_POPULATE, toApplicationView } from '../services/review';
 
 const UID = 'api::teacher-application.teacher-application' as never;
 const MAX_PAGE_SIZE = 50;
@@ -18,7 +18,7 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
     if (!reviewer) return ctx.forbidden();
 
     const status = ctx.query?.status;
-    const where = typeof status === 'string' && allowedStatuses.includes(status) ? { status } : {};
+    const where = typeof status === 'string' && allowedStatuses.includes(status) ? { reviewStatus: status } : {};
     const { page, pageSize, offset } = resolvePagination(ctx.query ?? {});
 
     const [entries, total] = await Promise.all([
@@ -32,7 +32,7 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
       strapi.db.query(UID).count({ where }),
     ]);
 
-    ctx.body = { data: entries, meta: { pagination: { page, pageSize, total, pageCount: Math.ceil(total / pageSize) } } };
+    ctx.body = { data: entries.map(toApplicationView), meta: { pagination: { page, pageSize, total, pageCount: Math.ceil(total / pageSize) } } };
   },
 
   async findOne(ctx) {
@@ -45,7 +45,7 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
     });
 
     if (!entry) return ctx.notFound();
-    ctx.body = { data: entry };
+    ctx.body = { data: toApplicationView(entry) };
   },
 
   async approve(ctx) {

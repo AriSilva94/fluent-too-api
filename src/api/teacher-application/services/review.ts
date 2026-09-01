@@ -14,17 +14,20 @@ export const REVIEW_ERROR = { alreadyReviewed: 'ALREADY_REVIEWED', reviewNoteReq
 export type ReviewError = (typeof REVIEW_ERROR)[keyof typeof REVIEW_ERROR];
 
 export type ReviewDecisionResult =
-  | { ok: true; data: { status: ApplicationStatus; reviewedBy: number | string; reviewedAt: string; reviewNote: string | null } }
+  | {
+      ok: true;
+      data: { reviewStatus: ApplicationStatus; reviewedBy: number | string; reviewedAt: string; reviewNote: string | null };
+    }
   | { ok: false; error: ReviewError };
 
 export function buildReviewDecision(
-  application: { id: number | string; status: ApplicationStatus },
+  application: { id: number | string; reviewStatus: ApplicationStatus },
   decision: ReviewDecision,
   reviewerId: number | string,
   note: string | undefined,
   now: string
 ): ReviewDecisionResult {
-  if (application.status !== APPLICATION_STATUS.pending) return { ok: false, error: REVIEW_ERROR.alreadyReviewed };
+  if (application.reviewStatus !== APPLICATION_STATUS.pending) return { ok: false, error: REVIEW_ERROR.alreadyReviewed };
 
   const trimmedNote = (note ?? '').trim();
   if (decision === REVIEW_DECISION.rejected && !trimmedNote) return { ok: false, error: REVIEW_ERROR.reviewNoteRequired };
@@ -32,12 +35,17 @@ export function buildReviewDecision(
   return {
     ok: true,
     data: {
-      status: decision,
+      reviewStatus: decision,
       reviewedBy: reviewerId,
       reviewedAt: now,
       reviewNote: trimmedNote || null,
     },
   };
+}
+
+export function toApplicationView<T extends { reviewStatus?: ApplicationStatus }>(entry: T) {
+  const { reviewStatus, ...rest } = entry;
+  return { ...rest, status: reviewStatus } as Omit<T, 'reviewStatus'> & { status: ApplicationStatus | undefined };
 }
 
 const UID = 'api::teacher-application.teacher-application';
@@ -56,6 +64,33 @@ export async function getReviewer(strapi: any, id: number | string | undefined) 
     populate: ['role'],
   });
   return user && isAdminRole(user.role?.type) ? user : null;
+}
+
+export async function promoteApprovedCandidate(strapi: any, applicationId: number | string) {
+  const application = await strapi.db.query(UID).findOne({
+    where: { id: applicationId },
+    populate: ['user'],
+  });
+  if (!application || application.reviewStatus !== APPLICATION_STATUS.approved || !application.user?.id) return false;
+
+  const candidate = await strapi.db.query('plugin::users-permissions.user').findOne({
+    where: { id: application.user.id },
+    populate: ['role'],
+  });
+  if (!candidate || candidate.role?.type === APP_ROLES.teacher) return false;
+
+  const teacherRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: APP_ROLES.teacher } });
+  if (!teacherRole) return false;
+
+  await strapi.db.query('plugin::users-permissions.user').update({
+    where: { id: candidate.id },
+    data: {
+      role: teacherRole.id,
+      teachingLanguages: normalizeTeachingLanguages(application.languages),
+    },
+  });
+
+  return true;
 }
 
 export async function reviewApplication(strapi: any, ctx: any, decision: ReviewDecision) {
@@ -85,7 +120,7 @@ export async function reviewApplication(strapi: any, ctx: any, decision: ReviewD
 
   const updated = await strapi.db.transaction(async () => {
     const reviewedApplication = await strapi.db.query(UID).update({
-      where: { id: application.id, status: APPLICATION_STATUS.pending },
+      where: { id: application.id, reviewStatus: APPLICATION_STATUS.pending },
       data: result.data,
       populate: SAFE_POPULATE,
     });
@@ -107,5 +142,5 @@ export async function reviewApplication(strapi: any, ctx: any, decision: ReviewD
 
   if (!updated) return ctx.conflict(REVIEW_ERROR.alreadyReviewed);
 
-  ctx.body = { data: updated };
+  ctx.body = { data: toApplicationView(updated) };
 }
