@@ -1,6 +1,6 @@
 import type { Core } from '@strapi/strapi';
 import { ensureAppAccessControl } from './auth/access-control';
-import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider, resolveAppAdminEmail } from './auth/config';
+import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './auth/config';
 import { patchUploadServiceForWebp } from './upload/webp';
 
 async function setStoreValue(strapi: Core.Strapi, key: string, value: unknown) {
@@ -34,7 +34,7 @@ export default {
       grant.google ?? {}
     );
 
-    await ensureAppAccessControl(strapi, resolveAppAdminEmail(process.env.APP_ADMIN_EMAIL));
+    await ensureAppAccessControl(strapi);
     await setStoreValue(strapi, 'advanced', advanced);
     await setStoreValue(strapi, 'grant', grant);
     await setStoreValue(strapi, 'email', email);

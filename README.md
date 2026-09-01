@@ -39,11 +39,12 @@ Admin local: `http://localhost:1337/admin`.
 | Strapi | `HOST`, `PORT`, `APP_KEYS`, `API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `TRANSFER_TOKEN_SALT`, `JWT_SECRET`, `ENCRYPTION_KEY` |
 | Banco | `DATABASE_CLIENT`, `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_SSL` |
 | URLs | `FRONTEND_PUBLIC_URL`, `STRAPI_PUBLIC_URL`, `CORS_ORIGINS` |
-| Acesso | `APP_ADMIN_EMAIL` |
 | E-mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, `EMAIL_REPLY_TO` |
 | Google OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | R2/CDN | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_ACCESS_SECRET`, `S3_PUBLIC_URL`, `S3_ROOT_PATH`, `S3_FORCE_PATH_STYLE`, `S3_ACL`, `S3_SIGNED_URL_EXPIRES` |
 | Compose local | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `MAILPIT_SMTP_PORT`, `MAILPIT_WEB_PORT`, `FRONTEND_PORT`, `STRAPI_PORT` |
+
+Papel de admin nao vem de configuracao: atribua `app_admin` ou `super_admin` ao usuario pelo painel do Strapi (Content Manager > User), que exige login administrativo e deixa rastro. Variavel de ambiente concederia o papel a cada boot, a quem editasse o deploy, sem como revogar pela aplicacao.
 
 Valores reais de `APP_KEYS`, salts, JWT secrets, senhas, SMTP, Google OAuth e R2 devem ficar apenas no ambiente local privado, no Dokploy ou em um gerenciador de segredos.
 

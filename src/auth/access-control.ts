@@ -13,7 +13,6 @@ type AppRoleDefinition = {
 };
 
 type AccessControlPlan = {
-  adminEmail?: string;
   roles: AppRoleDefinition[];
   permissions: Record<AccessRoleType, string[]>;
 };
@@ -117,7 +116,7 @@ const quizModerationActions = ['api::quiz.quiz.publish', 'api::quiz.quiz.unpubli
 
 const systemActions = ['plugin::users-permissions.user.destroy'];
 
-export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
+export function buildAccessControlPlan(): AccessControlPlan {
   const contentAdminActions = [
     ...authenticatedUserActions,
     ...readActions,
@@ -129,7 +128,6 @@ export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
   ];
 
   return {
-    adminEmail: adminEmail?.trim().toLowerCase() || undefined,
     roles: [
       { name: 'Super Admin', type: 'super_admin', description: 'Full application access' },
       { name: 'Admin', type: 'app_admin', description: 'Can view every app resource and manage quizzes' },
@@ -157,13 +155,11 @@ export function buildAccessControlPlan(adminEmail?: string): AccessControlPlan {
   };
 }
 
-export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail?: string) {
-  const plan = buildAccessControlPlan(adminEmail);
-  const roles = new Map<AppRoleType, { id: number | string }>();
+export async function ensureAppAccessControl(strapi: Core.Strapi) {
+  const plan = buildAccessControlPlan();
 
   for (const roleDefinition of plan.roles) {
     const role = await ensureRole(strapi, roleDefinition);
-    roles.set(roleDefinition.type, role);
     await syncPermissions(strapi, role.id, plan.permissions[roleDefinition.type]);
   }
 
@@ -175,11 +171,6 @@ export async function ensureAppAccessControl(strapi: Core.Strapi, adminEmail?: s
   const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'authenticated' } });
   if (authenticatedRole) {
     await syncPermissions(strapi, authenticatedRole.id, plan.permissions.authenticated);
-  }
-
-  const adminRole = roles.get('app_admin');
-  if (adminRole && plan.adminEmail) {
-    await assignUserRole(strapi, plan.adminEmail, adminRole.id);
   }
 
   await migrateAuthenticatedUsersToStudent(strapi);
@@ -239,16 +230,3 @@ async function syncPermissions(
   );
 }
 
-async function assignUserRole(strapi: Core.Strapi, email: string, roleId: number | string) {
-  if (!email) return;
-
-  const userQuery = strapi.db.query('plugin::users-permissions.user');
-  const user = await userQuery.findOne({ where: { email }, populate: ['role'] });
-
-  if (!user || isAdminRole(user.role?.type)) return;
-
-  await userQuery.update({
-    where: { id: user.id },
-    data: { role: roleId },
-  });
-}
