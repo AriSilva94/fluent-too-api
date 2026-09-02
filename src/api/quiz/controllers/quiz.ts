@@ -2,15 +2,13 @@ import { factories } from '@strapi/strapi';
 import type { Context } from 'koa';
 import { assignOwnerToDocument, stripOwner } from '../../../auth/ownership';
 import { resolveQuizType, validateQuestions } from '../services/questions';
-import { documentIdsOf, mergePublicationState } from '../services/publication';
+import { DRAFT_STATUS, withPublicationState } from '../../../publication/state';
 
 const MODERATION_ACTION = { publish: 'publish', unpublish: 'unpublish' } as const;
 
 type ModerationAction = (typeof MODERATION_ACTION)[keyof typeof MODERATION_ACTION];
 
 const UID = 'api::quiz.quiz';
-
-const DRAFT_STATUS = 'draft';
 
 export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => ({
   async create(ctx: Context) {
@@ -83,7 +81,7 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     });
 
     const sanitized = await controller.sanitizeOutput(results, ctx);
-    return controller.transformResponse(await withPublicationState(strapi, sanitized), { pagination });
+    return controller.transformResponse(await withPublicationState(strapi, UID, sanitized), { pagination });
   },
 
   async find(ctx: Context) {
@@ -102,7 +100,7 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
 
     const result = await super.find(ctx);
     if (ctx.query.status === DRAFT_STATUS && Array.isArray((result as any)?.data)) {
-      (result as any).data = await withPublicationState(strapi, (result as any).data);
+      (result as any).data = await withPublicationState(strapi, UID, (result as any).data);
     }
     return result;
   },
@@ -116,22 +114,6 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     return result;
   },
 }));
-
-async function withPublicationState(strapi: any, entries: any[]) {
-  const documentIds = documentIdsOf(entries);
-  if (documentIds.length === 0) return entries;
-
-  const published = await strapi.db.query(UID).findMany({
-    where: { documentId: { $in: documentIds }, publishedAt: { $notNull: true } },
-    select: ['documentId', 'publishedAt'],
-  });
-
-  const publishedAtByDocumentId = new Map<string, string>(
-    (published ?? []).map((entry: any) => [entry.documentId, new Date(entry.publishedAt).toISOString()])
-  );
-
-  return mergePublicationState(entries, publishedAtByDocumentId);
-}
 
 async function validateQuizPayload(strapi: any, payload: Record<string, unknown>, id: string | number | undefined) {
   const touchesQuestions = 'questions' in payload || 'type' in payload;

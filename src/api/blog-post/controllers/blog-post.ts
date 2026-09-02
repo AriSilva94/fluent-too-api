@@ -1,6 +1,7 @@
 import { factories } from '@strapi/strapi';
 import type { Context } from 'koa';
 import { assignOwnerToDocument, stripOwner } from '../../../auth/ownership';
+import { DRAFT_STATUS, withPublicationState } from '../../../publication/state';
 
 const UID = 'api::blog-post.blog-post';
 
@@ -28,6 +29,16 @@ export default factories.createCoreController('api::blog-post.blog-post' as neve
     }
 
     await publishBlogPost(strapi, created.documentId);
+
+    return result;
+  },
+
+  async find(ctx: Context) {
+    const result = await super.find(ctx);
+
+    if (ctx.query.status === DRAFT_STATUS && Array.isArray((result as any)?.data)) {
+      (result as any).data = await withPublicationState(strapi, UID, (result as any).data);
+    }
 
     return result;
   },
