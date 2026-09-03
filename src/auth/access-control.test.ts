@@ -30,6 +30,7 @@ describe('access control', () => {
 
     expect(extra).toEqual([
       'api::quiz.quiz.findMine',
+      'api::quiz.quiz.findMineReach',
       'api::quiz.quiz.create',
       'api::quiz.quiz.update',
       'api::quiz.quiz.delete',
@@ -67,6 +68,8 @@ describe('access control', () => {
     const plan = buildAccessControlPlan();
 
     expect(plan.permissions.app_admin).toEqual([
+      'api::notification.notification.find',
+      'api::notification.notification.markSeen',
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',
@@ -87,6 +90,7 @@ describe('access control', () => {
       'api::blog-post.blog-post.find',
       'api::blog-post.blog-post.findOne',
       'api::quiz.quiz.findMine',
+      'api::quiz.quiz.findMineReach',
       'api::quiz.quiz.create',
       'api::quiz.quiz.update',
       'api::quiz.quiz.delete',
@@ -170,6 +174,8 @@ describe('access control', () => {
     const plan = buildAccessControlPlan();
 
     expect(plan.permissions.authenticated).toEqual([
+      'api::notification.notification.find',
+      'api::notification.notification.markSeen',
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',
@@ -186,6 +192,8 @@ describe('access control', () => {
     const plan = buildAccessControlPlan();
 
     expect(plan.permissions.unassigned).toEqual([
+      'api::notification.notification.find',
+      'api::notification.notification.markSeen',
       'plugin::users-permissions.user.me',
       'plugin::users-permissions.auth.logout',
       'plugin::users-permissions.auth.changePassword',

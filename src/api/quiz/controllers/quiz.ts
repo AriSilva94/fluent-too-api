@@ -3,6 +3,7 @@ import type { Context } from 'koa';
 import { assignOwnerToDocument, stripOwner } from '../../../auth/ownership';
 import { resolveQuizType, validateQuestions } from '../services/questions';
 import { DRAFT_STATUS, withPublicationState } from '../../../publication/state';
+import { summarizeReach } from '../services/reach';
 
 const MODERATION_ACTION = { publish: 'publish', unpublish: 'unpublish' } as const;
 
@@ -82,6 +83,20 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
 
     const sanitized = await controller.sanitizeOutput(results, ctx);
     return controller.transformResponse(await withPublicationState(strapi, UID, sanitized), { pagination });
+  },
+
+  async findMineReach(ctx: Context) {
+    const user = ctx.state.user;
+    if (!user) return ctx.unauthorized();
+
+    const rows = await strapi.db.query('api::quiz-attempt.quiz-attempt').findMany({
+      where: { quiz: { owner: { id: user.id } } },
+      select: ['quizSlug', 'quizTitle', 'score'],
+      populate: { user: { select: ['id'] } },
+      limit: 1000,
+    });
+
+    ctx.body = { data: summarizeReach(rows) };
   },
 
   async find(ctx: Context) {

@@ -69,6 +69,11 @@
     "teachingLanguages": {
       "type": "json",
       "configurable": false
+    },
+    "notificationsSeenAt": {
+      "type": "datetime",
+      "configurable": false,
+      "private": true
     }
   }
 }

@@ -37,11 +37,13 @@ const readActions = [
 ];
 
 const quizOwnListAction = 'api::quiz.quiz.findMine';
+const quizOwnReachAction = 'api::quiz.quiz.findMineReach';
 
 const quizManagementActions = [
   'api::quiz.quiz.find',
   'api::quiz.quiz.findOne',
   quizOwnListAction,
+  quizOwnReachAction,
   'api::quiz.quiz.create',
   'api::quiz.quiz.update',
   'api::quiz.quiz.delete',
@@ -55,7 +57,10 @@ const quizAttemptManagementActions = [
   'api::quiz-attempt.quiz-attempt.delete',
 ];
 
+const notificationActions = ['api::notification.notification.find', 'api::notification.notification.markSeen'];
+
 const authenticatedUserActions = [
+  ...notificationActions,
   'plugin::users-permissions.user.me',
   'plugin::users-permissions.auth.logout',
   'plugin::users-permissions.auth.changePassword',
@@ -75,6 +80,7 @@ const blogManagementActions = [
 
 const contentCreationActions = [
   quizOwnListAction,
+  quizOwnReachAction,
   'api::quiz.quiz.create',
   'api::quiz.quiz.update',
   'api::quiz.quiz.delete',
