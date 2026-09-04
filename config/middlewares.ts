@@ -30,6 +30,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     },
     'strapi::poweredBy',
     'strapi::query',
+    'global::origin-check',
     'global::teacher-attachment-limit',
     'global::profile-rate-limit',
     'strapi::body',
