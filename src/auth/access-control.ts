@@ -78,6 +78,8 @@ const blogManagementActions = [
   'api::blog-post.blog-post.delete',
 ];
 
+const mediaUploadAction = 'plugin::upload.content-api.upload';
+
 const contentCreationActions = [
   quizOwnListAction,
   quizOwnReachAction,
@@ -85,6 +87,7 @@ const contentCreationActions = [
   'api::quiz.quiz.update',
   'api::quiz.quiz.delete',
   ...blogManagementActions,
+  mediaUploadAction,
 ];
 
 const teacherApplicationReviewActions = [
@@ -131,6 +134,7 @@ export function buildAccessControlPlan(): AccessControlPlan {
     ...blogManagementActions,
     ...teacherApplicationReviewActions,
     ...quizModerationActions,
+    mediaUploadAction,
   ];
 
   return {
