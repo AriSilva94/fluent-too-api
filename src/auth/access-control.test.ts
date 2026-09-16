@@ -37,6 +37,7 @@ describe('access control', () => {
       'api::blog-post.blog-post.create',
       'api::blog-post.blog-post.update',
       'api::blog-post.blog-post.delete',
+      'plugin::upload.content-api.upload',
     ]);
   });
 
@@ -106,6 +107,7 @@ describe('access control', () => {
       'api::teacher-application.teacher-application.reject',
       'api::quiz.quiz.publish',
       'api::quiz.quiz.unpublish',
+      'plugin::upload.content-api.upload',
     ]);
   });
 
