@@ -1,3 +1,4 @@
+import { APP_ROLES } from '../../../auth/roles';
 import type { GradeResult } from './grade';
 
 type AttemptInput = {
@@ -50,7 +51,7 @@ export function buildAttemptCreateData(input: AttemptInput, user: UserLike, quiz
 }
 
 export function buildAttemptFindFilters(user: UserLike) {
-  return user.role?.type === 'app_admin' ? {} : { user: { id: user.id } };
+  return user.role?.type === APP_ROLES.appAdmin ? {} : { user: { id: user.id } };
 }
 
 export function buildAttemptDuplicateFilters(input: AttemptInput, user: UserLike) {

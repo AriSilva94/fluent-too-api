@@ -1,7 +1,10 @@
 import type { Core } from '@strapi/strapi';
 import { ensureAppAccessControl } from './auth/access-control';
-import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider, resolveAppAdminEmail } from './auth/config';
+import { dropObsoleteIndexes, ensureAppIndexes } from './database/indexes';
+import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './auth/config';
 import { patchUploadServiceForWebp } from './upload/webp';
+import { seedBlogWhenEmpty } from './seed/blog';
+import { seedQuizzesWhenEmpty } from './seed/quiz';
 
 async function setStoreValue(strapi: Core.Strapi, key: string, value: unknown) {
   const store = strapi.store({ type: 'plugin', name: 'users-permissions', key });
@@ -34,7 +37,11 @@ export default {
       grant.google ?? {}
     );
 
-    await ensureAppAccessControl(strapi, resolveAppAdminEmail(process.env.APP_ADMIN_EMAIL));
+    await dropObsoleteIndexes(strapi);
+    await ensureAppIndexes(strapi);
+    await ensureAppAccessControl(strapi);
+    await seedBlogWhenEmpty(strapi).catch((error) => strapi.log.error('Seed de blog falhou', error));
+    await seedQuizzesWhenEmpty(strapi).catch((error) => strapi.log.error('Seed de quizzes falhou', error));
     await setStoreValue(strapi, 'advanced', advanced);
     await setStoreValue(strapi, 'grant', grant);
     await setStoreValue(strapi, 'email', email);
