@@ -1,5 +1,6 @@
 import { factories } from '@strapi/strapi';
 import { getReviewer, reviewApplication, SAFE_POPULATE, toApplicationView } from '../services/review';
+import { buildContentDisposition, openAttachmentStream } from '../services/attachment';
 
 const UID = 'api::teacher-application.teacher-application' as never;
 const MAX_PAGE_SIZE = 50;
@@ -46,6 +47,26 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
 
     if (!entry) return ctx.notFound();
     ctx.body = { data: toApplicationView(entry) };
+  },
+
+  async attachment(ctx) {
+    const reviewer = await getReviewer(strapi, ctx.state.user?.id);
+    if (!reviewer) return ctx.forbidden();
+
+    const entry = await strapi.db.query(UID).findOne({
+      where: { id: ctx.params.id },
+      populate: { attachment: true },
+    });
+    if (!entry?.attachment) return ctx.notFound();
+
+    const file = await openAttachmentStream(strapi, entry.attachment);
+    if (!file) return ctx.notFound();
+
+    ctx.type = file.contentType;
+    ctx.set('Content-Disposition', buildContentDisposition(file.filename));
+    ctx.set('Cache-Control', 'private, no-store');
+    ctx.set('X-Content-Type-Options', 'nosniff');
+    ctx.body = file.body;
   },
 
   async approve(ctx) {

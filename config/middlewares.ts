@@ -29,11 +29,13 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
       },
     },
     'strapi::poweredBy',
+    'global::client-ip',
     'strapi::query',
     'global::origin-check',
     'global::teacher-attachment-limit',
     'global::profile-rate-limit',
     'strapi::body',
+    'global::upload-guard',
     'global::teacher-attachment-cleanup',
     {
       name: 'strapi::session',

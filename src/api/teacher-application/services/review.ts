@@ -1,5 +1,6 @@
 import { normalizeTeachingLanguages } from '../../../auth/quiz-language';
 import { APP_ROLES, isAdminRole } from '../../../auth/roles';
+import { toAttachmentView, type AttachmentView, type StoredAttachment } from './attachment';
 
 export const APPLICATION_STATUS = { pending: 'pending', approved: 'approved', rejected: 'rejected' } as const;
 
@@ -43,9 +44,13 @@ export function buildReviewDecision(
   };
 }
 
-export function toApplicationView<T extends { reviewStatus?: ApplicationStatus }>(entry: T) {
-  const { reviewStatus, ...rest } = entry;
-  return { ...rest, status: reviewStatus } as Omit<T, 'reviewStatus'> & { status: ApplicationStatus | undefined };
+export function toApplicationView<T extends { reviewStatus?: ApplicationStatus; attachment?: StoredAttachment | null }>(entry: T) {
+  const { reviewStatus, attachment, ...rest } = entry;
+  return {
+    ...rest,
+    ...('attachment' in entry ? { attachment: toAttachmentView(attachment) } : {}),
+    status: reviewStatus,
+  } as Omit<T, 'reviewStatus' | 'attachment'> & { status: ApplicationStatus | undefined; attachment?: AttachmentView | null };
 }
 
 const UID = 'api::teacher-application.teacher-application';

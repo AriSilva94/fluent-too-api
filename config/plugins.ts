@@ -61,7 +61,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
               throw new Error(`Forbidden callback provided: origin doesn't match FRONTEND_PUBLIC_URL.`);
             }
 
-            if (uCallback.pathname !== '/api/auth/google/callback') {
+            if (!/^\/api\/auth\/google\/callback\/[a-f0-9]{32}$/.test(uCallback.pathname)) {
               throw new Error(`Forbidden callback provided: unexpected pathname.`);
             }
           },

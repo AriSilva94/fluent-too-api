@@ -103,6 +103,7 @@ describe('access control', () => {
       'api::blog-post.blog-post.delete',
       'api::teacher-application.teacher-application.find',
       'api::teacher-application.teacher-application.findOne',
+      'api::teacher-application.teacher-application.attachment',
       'api::teacher-application.teacher-application.approve',
       'api::teacher-application.teacher-application.reject',
       'api::quiz.quiz.publish',

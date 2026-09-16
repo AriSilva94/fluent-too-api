@@ -42,3 +42,22 @@ describe('plugins config', () => {
     expect(upload.providerOptions.s3Options.params).not.toHaveProperty('ACL');
   });
 });
+
+describe('validação do callback do Google', () => {
+  function validate(callback: string) {
+    const config = pluginsConfig({
+      env: createEnv({ FRONTEND_PUBLIC_URL: 'https://fluent-too.com' }),
+    } as any) as any;
+    return () => config['users-permissions'].config.callback.validate(callback);
+  }
+
+  it('aceita callback do front com nonce no caminho', () => {
+    expect(validate('https://fluent-too.com/api/auth/google/callback/0123456789abcdef0123456789abcdef')).not.toThrow();
+  });
+
+  it('recusa callback sem nonce, de outra origem ou com caminho extra', () => {
+    expect(validate('https://fluent-too.com/api/auth/google/callback')).toThrow();
+    expect(validate('https://evil.example/api/auth/google/callback/0123456789abcdef0123456789abcdef')).toThrow();
+    expect(validate('https://fluent-too.com/api/auth/google/callback/0123456789abcdef0123456789abcdef/x')).toThrow();
+  });
+});

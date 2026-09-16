@@ -2,7 +2,8 @@ import { factories } from '@strapi/strapi';
 import type { Context } from 'koa';
 import { assignOwnerToDocument, stripOwner } from '../../../auth/ownership';
 import { resolveQuizType, validateQuestions } from '../services/questions';
-import { DRAFT_STATUS, withPublicationState } from '../../../publication/state';
+import { DRAFT_STATUS, hasPublishedVersion, PUBLISHED_STATUS, withPublicationState } from '../../../publication/state';
+import { isAdminUserId } from '../../../auth/current-user';
 import { summarizeReach } from '../services/reach';
 
 const MODERATION_ACTION = { publish: 'publish', unpublish: 'unpublish' } as const;
@@ -52,10 +53,14 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     const invalid = await validateQuizPayload(strapi, payload, ctx.params.id);
     if (invalid) return ctx.badRequest(invalid.error, { index: invalid.index });
 
+    const wasPublished = await hasPublishedVersion(strapi, UID, ctx.params.id);
+
     ctx.request.body = { data: payload };
     const result = await super.update(ctx);
 
-    await publishQuiz(strapi, (result as any)?.data?.documentId ?? ctx.params.id);
+    if (wasPublished) {
+      await publishQuiz(strapi, (result as any)?.data?.documentId ?? ctx.params.id);
+    }
 
     return result;
   },
@@ -100,6 +105,8 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
   },
 
   async find(ctx: Context) {
+    await restrictToPublishedUnlessAdmin(strapi, ctx);
+
     const isAuthenticated = Boolean(ctx.state.user);
     if (!isAuthenticated) {
       const existingFilters =
@@ -121,6 +128,8 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
   },
 
   async findOne(ctx: Context) {
+    await restrictToPublishedUnlessAdmin(strapi, ctx);
+
     const isAuthenticated = Boolean(ctx.state.user);
     const result = await super.findOne(ctx);
     if (!isAuthenticated && result?.data?.isPublic === false) {
@@ -129,6 +138,11 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
     return result;
   },
 }));
+
+async function restrictToPublishedUnlessAdmin(strapi: any, ctx: Context) {
+  if (await isAdminUserId(strapi, ctx.state.user?.id)) return;
+  ctx.query = { ...ctx.query, status: PUBLISHED_STATUS };
+}
 
 async function validateQuizPayload(strapi: any, payload: Record<string, unknown>, id: string | number | undefined) {
   const touchesQuestions = 'questions' in payload || 'type' in payload;

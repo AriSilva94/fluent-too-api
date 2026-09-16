@@ -109,3 +109,19 @@ describe('view pública da candidatura', () => {
     });
   });
 });
+
+describe('visão da candidatura para o admin', () => {
+  it('troca o anexo populado por metadados sem URL', () => {
+    const view = toApplicationView({
+      id: 1,
+      reviewStatus: 'pending' as const,
+      attachment: { id: 9, name: 'cv.pdf', mime: 'application/pdf', size: 10, url: 'https://cdn.example/private/cv.pdf' },
+    });
+
+    expect(view).toEqual({
+      id: 1,
+      status: 'pending',
+      attachment: { id: 9, name: 'cv.pdf', mime: 'application/pdf', size: 10 },
+    });
+  });
+});

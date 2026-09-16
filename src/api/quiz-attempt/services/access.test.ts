@@ -60,5 +60,6 @@ describe('quiz attempt access', () => {
 
   it('não filtra histórico quando é admin do app', () => {
     expect(buildAttemptFindFilters({ id: 10, role: { type: 'app_admin' } })).toEqual({});
+    expect(buildAttemptFindFilters({ id: 10, role: { type: 'super_admin' } })).toEqual({});
   });
 });

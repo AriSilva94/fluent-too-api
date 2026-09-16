@@ -49,6 +49,7 @@ services:
       FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://localhost:3000}
       STRAPI_PUBLIC_URL: ${STRAPI_PUBLIC_URL:-http://localhost:1337}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-local-internal-proxy-secret}
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       SMTP_SECURE: "false"
@@ -87,6 +88,7 @@ services:
       STRAPI_PUBLIC_URL: ${STRAPI_PUBLIC_URL:-http://localhost:1337}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       REDIS_URL: redis://redis:6379
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-local-internal-proxy-secret}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     depends_on:

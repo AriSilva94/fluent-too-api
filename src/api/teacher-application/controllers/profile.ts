@@ -2,6 +2,7 @@ import type { Core } from '@strapi/strapi';
 import { canBecomeStudent, canBecomeTeacher } from '../../../auth/profile-transitions';
 import { APP_ROLES } from '../../../auth/roles';
 import { APPLICATION_STATUS } from '../services/review';
+import { PRIVATE_ATTACHMENT_PATH } from '../services/attachment';
 import { validateAttachmentFile, validateTeacherApplication } from '../services/registration';
 
 const USER_UID = 'plugin::users-permissions.user';
@@ -45,7 +46,7 @@ async function createTeacherApplication(strapi: Core.Strapi, ctx: any, user: any
     let attachmentId: number | undefined;
     if (attachmentFile) {
       const uploaded = await strapi.plugin('upload').service('upload').upload({
-        data: {},
+        data: { path: PRIVATE_ATTACHMENT_PATH },
         files: attachmentFile,
       });
       uploadedFile = Array.isArray(uploaded) ? uploaded[0] : uploaded;
