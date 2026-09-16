@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { documentIdsOf, mergePublicationState, withPublicationState } from './state';
+import { documentIdsOf, hasPublishedVersion, mergePublicationState, withPublicationState } from './state';
 
 describe('mergePublicationState', () => {
   it('marca como publicado o quiz que tem versão publicada', () => {
@@ -64,5 +64,47 @@ describe('withPublicationState', () => {
 
     expect(await withPublicationState(strapi, 'api::quiz.quiz', [{}])).toEqual([{}]);
     expect(strapi.calls).toHaveLength(0);
+  });
+});
+
+describe('hasPublishedVersion', () => {
+  const UID = 'api::quiz.quiz';
+  const rows = [
+    { id: 1, documentId: 'abc', publishedAt: null },
+    { id: 2, documentId: 'abc', publishedAt: new Date('2026-01-01T00:00:00.000Z') },
+    { id: 3, documentId: 'xyz', publishedAt: null },
+  ];
+
+  function fakeStrapi() {
+    return {
+      db: {
+        query: () => ({
+          findOne: async ({ where }: any) =>
+            rows.find(
+              (row) =>
+                (where.documentId === undefined || row.documentId === where.documentId) &&
+                (where.id === undefined || row.id === where.id) &&
+                (where.publishedAt === undefined || row.publishedAt !== null)
+            ) ?? null,
+        }),
+      },
+    };
+  }
+
+  it('detecta versão publicada pelo documentId', async () => {
+    expect(await hasPublishedVersion(fakeStrapi(), UID, 'abc')).toBe(true);
+  });
+
+  it('detecta versão publicada pelo id numérico do rascunho', async () => {
+    expect(await hasPublishedVersion(fakeStrapi(), UID, '1')).toBe(true);
+  });
+
+  it('retorna falso para documento despublicado', async () => {
+    expect(await hasPublishedVersion(fakeStrapi(), UID, 'xyz')).toBe(false);
+    expect(await hasPublishedVersion(fakeStrapi(), UID, 3)).toBe(false);
+  });
+
+  it('retorna falso sem id', async () => {
+    expect(await hasPublishedVersion(fakeStrapi(), UID, undefined)).toBe(false);
   });
 });

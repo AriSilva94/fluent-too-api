@@ -1,6 +1,27 @@
 export type PublishableEntry = { documentId?: unknown; publishedAt?: unknown };
 
 export const DRAFT_STATUS = 'draft';
+export const PUBLISHED_STATUS = 'published';
+
+export async function hasPublishedVersion(strapi: any, uid: string, id: string | number | undefined): Promise<boolean> {
+  if (id === undefined || id === null || id === '') return false;
+
+  const byDocumentId = await strapi.db.query(uid).findOne({
+    where: { documentId: String(id), publishedAt: { $notNull: true } },
+    select: ['id'],
+  });
+  if (byDocumentId) return true;
+  if (!/^\d+$/.test(String(id))) return false;
+
+  const row = await strapi.db.query(uid).findOne({ where: { id: Number(id) }, select: ['documentId'] });
+  if (!row?.documentId) return false;
+
+  const published = await strapi.db.query(uid).findOne({
+    where: { documentId: row.documentId, publishedAt: { $notNull: true } },
+    select: ['id'],
+  });
+  return Boolean(published);
+}
 
 export function mergePublicationState<T extends PublishableEntry>(
   entries: T[],

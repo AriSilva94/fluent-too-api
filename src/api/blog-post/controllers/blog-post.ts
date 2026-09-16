@@ -1,7 +1,8 @@
 import { factories } from '@strapi/strapi';
 import type { Context } from 'koa';
 import { assignOwnerToDocument, stripOwner } from '../../../auth/ownership';
-import { DRAFT_STATUS, withPublicationState } from '../../../publication/state';
+import { DRAFT_STATUS, hasPublishedVersion, PUBLISHED_STATUS, withPublicationState } from '../../../publication/state';
+import { isAdminUserId } from '../../../auth/current-user';
 
 const UID = 'api::blog-post.blog-post';
 
@@ -34,6 +35,7 @@ export default factories.createCoreController('api::blog-post.blog-post' as neve
   },
 
   async find(ctx: Context) {
+    await restrictToPublishedUnlessAdmin(strapi, ctx);
     const result = await super.find(ctx);
 
     if (ctx.query.status === DRAFT_STATUS && Array.isArray((result as any)?.data)) {
@@ -43,17 +45,32 @@ export default factories.createCoreController('api::blog-post.blog-post' as neve
     return result;
   },
 
+  async findOne(ctx: Context) {
+    await restrictToPublishedUnlessAdmin(strapi, ctx);
+    return super.findOne(ctx);
+  },
+
   async update(ctx: Context) {
     if (!ctx.state.user) return ctx.unauthorized();
+
+    const shouldPublish =
+      (await isAdminUserId(strapi, (ctx.state.user as any).id)) || (await hasPublishedVersion(strapi, UID, ctx.params.id as string));
 
     ctx.request.body = { data: stripOwner((ctx.request.body as any)?.data ?? {}) };
     const result = await super.update(ctx);
 
-    await publishBlogPost(strapi, (result as any)?.data?.documentId ?? (ctx.params.id as string));
+    if (shouldPublish) {
+      await publishBlogPost(strapi, (result as any)?.data?.documentId ?? (ctx.params.id as string));
+    }
 
     return result;
   },
 }));
+
+async function restrictToPublishedUnlessAdmin(strapi: any, ctx: Context) {
+  if (await isAdminUserId(strapi, (ctx.state.user as any)?.id)) return;
+  ctx.query = { ...ctx.query, status: PUBLISHED_STATUS };
+}
 
 async function publishBlogPost(strapi: any, documentId: string | undefined) {
   if (!documentId) return;
