@@ -132,6 +132,13 @@ export default factories.createCoreController('api::quiz.quiz', ({ strapi }) => 
 
     const isAuthenticated = Boolean(ctx.state.user);
     const result = await super.findOne(ctx);
+    if (!isAuthenticated) {
+      const privateCheck = await strapi.db.query(UID).findOne({
+        where: { documentId: ctx.params.id },
+        select: ['isPublic'],
+      }) ?? await strapi.db.query(UID).findOne({ where: { id: ctx.params.id }, select: ['isPublic'] });
+      if (privateCheck?.isPublic === false) return ctx.forbidden('This quiz requires authentication.');
+    }
     if (!isAuthenticated && result?.data?.isPublic === false) {
       return ctx.forbidden('This quiz requires authentication.');
     }

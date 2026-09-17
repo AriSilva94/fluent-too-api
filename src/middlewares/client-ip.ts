@@ -30,6 +30,7 @@ export function resolveClientIp(headers: Headers, secret: string | undefined) {
     if (forwarded) return forwarded;
   }
 
+  if (process.env.TRUSTED_PROXY_HEADERS !== 'true') return null;
   return validIp(readHeader(headers, CLOUDFLARE_IP_HEADER));
 }
 

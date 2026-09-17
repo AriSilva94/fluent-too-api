@@ -20,7 +20,7 @@ export default factories.createCoreController('api::quiz-attempt.quiz-attempt' a
 
     const quiz: (QuizRecord & { questions: unknown }) | null = await strapi.db
       .query('api::quiz.quiz')
-      .findOne({ where: { slug: quizSlug }, select: QUIZ_SELECT_FOR_GRADING });
+      .findOne({ where: { slug: quizSlug, publishedAt: { $notNull: true } }, select: [...QUIZ_SELECT_FOR_GRADING, 'publishedAt'] });
     if (!quiz) return ctx.badRequest('QUIZ_NOT_FOUND');
 
     const grade = gradeQuiz(quiz.type, quiz.questions, input.answers);

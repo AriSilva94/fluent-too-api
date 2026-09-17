@@ -36,6 +36,7 @@ export default {
       strapiPublicUrl,
       grant.google ?? {}
     );
+    configureGoogleProvider(strapi);
 
     await dropObsoleteIndexes(strapi);
     await ensureAppIndexes(strapi);
@@ -47,3 +48,21 @@ export default {
     await setStoreValue(strapi, 'email', email);
   },
 };
+
+function configureGoogleProvider(strapi: Core.Strapi) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) return;
+  const registry = strapi.plugin('users-permissions').service('providers-registry');
+  registry.add('google', {
+    enabled: true,
+    async authCallback({ accessToken }: { accessToken: string }) {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
+      if (!response.ok) throw new Error('Invalid Google token');
+      const profile = (await response.json()) as { aud?: string; email?: string; email_verified?: boolean };
+      if (profile.aud !== clientId || !profile.email || profile.email_verified !== true) {
+        throw new Error('Invalid Google identity');
+      }
+      return { username: profile.email.split('@')[0], email: profile.email };
+    },
+  });
+}
