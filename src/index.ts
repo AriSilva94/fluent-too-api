@@ -58,8 +58,9 @@ function configureGoogleProvider(strapi: Core.Strapi) {
     async authCallback({ accessToken }: { accessToken: string }) {
       const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
       if (!response.ok) throw new Error('Invalid Google token');
-      const profile = (await response.json()) as { aud?: string; email?: string; email_verified?: boolean };
-      if (profile.aud !== clientId || !profile.email || profile.email_verified !== true) {
+      const profile = (await response.json()) as { aud?: string; email?: string; email_verified?: boolean | string };
+      const emailVerified = profile.email_verified === true || profile.email_verified === 'true';
+      if (profile.aud !== clientId || !profile.email || !emailVerified) {
         throw new Error('Invalid Google identity');
       }
       return { username: profile.email.split('@')[0], email: profile.email };
