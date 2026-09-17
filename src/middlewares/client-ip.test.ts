@@ -6,6 +6,7 @@ const SECRET = 'segredo-compartilhado';
 describe('resolução do IP do cliente', () => {
   afterEach(() => {
     delete process.env.INTERNAL_PROXY_SECRET;
+    delete process.env.TRUSTED_PROXY_HEADERS;
   });
 
   it('usa o IP repassado pelo Next quando o segredo confere', () => {
@@ -19,6 +20,7 @@ describe('resolução do IP do cliente', () => {
   });
 
   it('ignora IP repassado sem segredo válido e cai no Cloudflare', () => {
+    process.env.TRUSTED_PROXY_HEADERS = 'true';
     const headers = {
       'x-fluent-internal-secret': 'errado',
       'x-fluent-client-ip': '203.0.113.7',

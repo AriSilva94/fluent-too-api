@@ -1,5 +1,9 @@
 import type { Core } from '@strapi/strapi';
 
+export function validatePasswordPolicy(password: unknown) {
+  return typeof password === 'string' && new TextEncoder().encode(password).byteLength >= 8;
+}
+
 const allowedMediaTypes = [
   'image/png',
   'image/jpeg',
@@ -36,6 +40,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       config: {
         jwtManagement: 'refresh',
         jwtSecret: env('JWT_SECRET'),
+        validationRules: {
+          validatePassword: validatePasswordPolicy,
+        },
         accessTokenLifespan: 600,
         maxRefreshTokenLifespan: 2592000,
         idleRefreshTokenLifespan: 1209600,

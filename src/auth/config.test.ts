@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { buildAdvancedSettings, buildEmailTemplates, buildGoogleProvider } from './config';
+import { validatePasswordPolicy } from '../../config/plugins';
 
 describe('auth config', () => {
+  it('exige oito bytes para senhas no backend', () => {
+    expect(validatePasswordPolicy('123456')).toBe(false);
+    expect(validatePasswordPolicy('12345678')).toBe(true);
+  });
   it('preserva campos existentes e força cadastro com confirmação', () => {
     expect(buildAdvancedSettings({ default_role: 'public', extra: true }, 'https://app.example.com')).toEqual({
       default_role: 'unassigned',
